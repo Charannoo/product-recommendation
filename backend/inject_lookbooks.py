@@ -1,5 +1,8 @@
 import json
 import sqlite3
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def add_lookbook_items():
     images = {
@@ -18,11 +21,9 @@ def add_lookbook_items():
         {"id": 9001, "name": "Elegant Evening Gown", "price": 5200, "category": "Women Fashion", "image": images["VIBE_PARTY_1"], "rating": 4.9, "description": "A sleek, modest evening gown perfect for classy parties.", "popularity": 1},
         {"id": 9002, "name": "Pro Beauty Kit Collection", "price": 3200, "category": "Beauty", "image": images["VIBE_PARTY_2"], "rating": 4.8, "description": "Everything you need for a flawless party glam look.", "popularity": 1},
         {"id": 9003, "name": "Stiletto Party Heels", "price": 2800, "category": "Shoes", "image": images["VIBE_PARTY_3"], "rating": 4.7, "description": "Classic red stilettos to complete any evening look.", "popularity": 1},
-        
         {"id": 9004, "name": "Bespoke Navy Suit", "price": 12000, "category": "Men Fashion", "image": images["VIBE_PRO_1"], "rating": 4.9, "description": "A sharply tailored navy suit for the ultimate professional edge.", "popularity": 1},
         {"id": 9005, "name": "Executive Leather Briefcase", "price": 5600, "category": "Men Fashion", "image": images["VIBE_PRO_2"], "rating": 4.8, "description": "Premium leather crafted for your laptop and documents.", "popularity": 1},
         {"id": 9006, "name": "Classic Leather Oxfords", "price": 4200, "category": "Shoes", "image": images["VIBE_PRO_3"], "rating": 4.9, "description": "Timeless leather oxfords that step up your career.", "popularity": 1},
-        
         {"id": 9007, "name": "Oversized Cozy Sweater", "price": 1800, "category": "Women Fashion", "image": images["VIBE_COMFORT_1"], "rating": 4.8, "description": "Sink into ultimate relaxation with this oversized knit.", "popularity": 1},
         {"id": 9010, "name": "Men's Relaxed Fit Cotton Hoodie", "price": 2500, "category": "Men Fashion", "image": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800", "rating": 4.8, "description": "A very comfortable and cozy hoodie for everyday wear.", "popularity": 1},
         {"id": 9011, "name": "Men's Cozy Lounge Joggers", "price": 1800, "category": "Men Fashion", "image": "https://images.unsplash.com/photo-1584865288642-42078afe6942?q=80&w=800", "rating": 4.7, "description": "Relaxed sweatpants perfect for lounging at home.", "popularity": 1},
@@ -31,28 +32,29 @@ def add_lookbook_items():
         {"id": 9014, "name": "Men's Soft Cotton T-Shirt", "price": 900, "category": "Men Fashion", "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800", "rating": 4.7, "description": "Breathable and incredibly soft t-shirt.", "popularity": 1}
     ]
 
-    with open('data/catalog.json', 'r', encoding='utf-8') as f:
+    catalog_path = os.path.join(BASE_DIR, 'data', 'catalog.json')
+    db_path = os.path.join(BASE_DIR, 'data', 'shop.db')
+
+    with open(catalog_path, 'r', encoding='utf-8') as f:
         catalog = json.load(f)
-        
-    # remove existing
+
     catalog = [p for p in catalog if p.get('id') < 9000]
     catalog.extend(products)
-    
-    with open('data/catalog.json', 'w', encoding='utf-8') as f:
+
+    with open(catalog_path, 'w', encoding='utf-8') as f:
         json.dump(catalog, f, indent=4)
-        
-    conn = sqlite3.connect('data/shop.db')
+
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
-    
-    # insert or replace
+
     for p in products:
         c.execute('''
             INSERT OR REPLACE INTO products (id, name, price, description, category, rating, image, popularity)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (p['id'], p['name'], p['price'], p['description'], p['category'], p['rating'], p['image'], p['popularity']))
-        
+
     conn.commit()
     conn.close()
-    
+
 add_lookbook_items()
 print("Lookbook items added to DB!")

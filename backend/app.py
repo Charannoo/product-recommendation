@@ -1594,7 +1594,6 @@ def register():
             password = request.form.get('password', '').strip()
             confirm_password = request.form.get('confirm_password', '').strip()
             
-            # 1. Validation
             if not name:
                 return render_template("register.html", error="Name is required.")
             if not identifier:
@@ -1605,58 +1604,43 @@ def register():
                 return render_template("register.html", error="Password must be at least 6 characters.")
             if password != confirm_password:
                 return render_template("register.html", error="Passwords do not match.")
-                
             if not (is_valid_email(identifier) or is_valid_mobile(identifier)):
                 return render_template("register.html", error="Please enter a valid email address or 10-digit mobile number.")
                 
-            # 2. Check if user already exists
             from backend.db import get_db_connection
-                
             conn = get_db_connection()
-            c = conn.cursor()
-            user_row = c.execute("SELECT * FROM users WHERE email = ?", (identifier,)).fetchone()
+            user_row = conn.execute("SELECT * FROM users WHERE email = ?", (identifier,)).fetchone()
             conn.close()
-            
             if user_row:
                 return render_template("register.html", error="An account already exists with this email or mobile number. Please sign in.")
                 
-            # 3. Rate Limiting Check
-            ip_addr = request.remote_addr
+            ip_addr = request.remote_addr or "unknown"
             is_limited, limit_msg = check_otp_rate_limit(identifier, ip_addr)
             if is_limited:
                 return render_template("register.html", error=limit_msg)
                 
-            # 4. Generate & Send OTP for Registration
             otp = str(random.randint(100000, 999999))
-            expiry = int(time.time()) + 120  # 2 minutes
+            expiry = int(time.time()) + 120
+            
             session['pending_otp'] = {
-                'code': otp, 
-                'recipient': identifier, 
-                'expires': expiry, 
-                'last_sent': int(time.time()), 
-                'resend_count': 0,
-                'verify_attempts': 0,
-                'is_registration': True,
-                'reg_name': name,
-                'reg_password': password
+                'code': otp, 'recipient': identifier, 'expires': expiry,
+                'last_sent': int(time.time()), 'resend_count': 0,
+                'verify_attempts': 0, 'is_registration': True,
+                'reg_name': name
             }
             
-            smtp_configured = bool(os.environ.get('SMTP_EMAIL') and os.environ.get('SMTP_PASSWORD'))
-            if not smtp_configured:
+            if not bool(os.environ.get('SMTP_EMAIL') and os.environ.get('SMTP_PASSWORD')):
                 session['simulated_otp'] = otp
             
             record_otp_request(identifier, ip_addr)
-            
-            sent = send_otp_to_recipient(identifier, otp)
-            if not sent:
-                return render_template("register.html", error="Failed to send OTP. Please try again.")
-                
+            send_otp_to_recipient(identifier, otp)
             return redirect(url_for('verify_otp'))
+            
         except Exception as e:
             import traceback
             tb = traceback.format_exc()
             app.logger.error('Register error: %s', tb)
-            return f"<h1>500 Error</h1><pre>{tb}</pre>", 500
+            return f"<h1>Register Error</h1><pre>{tb}</pre>", 500
         
     return render_template("register.html")
 
