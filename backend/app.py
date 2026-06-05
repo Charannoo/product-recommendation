@@ -1522,6 +1522,8 @@ def send_otp_via_brevo(to, subject, text, api_key, from_email):
         method="POST"
     )
     resp = urllib.request.urlopen(req, timeout=15)
+    body = resp.read().decode()
+    print(f"[Brevo-API] Status: {resp.status}, Response: {body[:500]}")
     return resp.status in (200, 201)
 
 def _send_smtp(host, port, use_tls, from_addr, password, to_addr, subject, body):
@@ -1593,6 +1595,7 @@ def send_otp_to_recipient(identifier, otp):
         brevo_key = os.environ.get('BREVO_API_KEY')
         if brevo_key:
             try:
+                print(f"[Brevo] Sending from {from_email} to {identifier}")
                 if send_otp_via_brevo(identifier, subject, body, brevo_key, from_email):
                     session.pop('simulated_otp', None)
                     session['otp_delivery_status'] = 'sent'
