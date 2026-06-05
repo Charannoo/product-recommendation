@@ -21,12 +21,25 @@
     {% endif %}
 
     {% if simulated_otp %}
-    <div style="background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 12px 16px; border-radius: 8px; margin: 15px auto; max-width: 420px; font-size: 14px;">
-        <strong>⚙️ Dev Mode — Simulated OTP:</strong>
-        <span style="font-size: 24px; font-weight: bold; letter-spacing: 6px; display: block; margin-top: 8px;">{{ simulated_otp }}</span>
-        <div style="margin-top: 6px; font-size: 12px; opacity: 0.8;">
-            SMTP not configured. Set <code>SMTP_EMAIL</code> &amp; <code>SMTP_PASSWORD</code> in Railway Variables to send real emails.
+    <div style="background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 12px 16px; border-radius: 8px; margin: 15px auto; max-width: 520px; font-size: 14px; text-align: left;">
+        <strong>⚙️ OTP Delivery Fallback:</strong>
+        <div style="margin-top: 8px; font-size: 18px; font-weight: 600; letter-spacing: 6px;">{{ simulated_otp }}</div>
+        <div style="margin-top: 10px; font-size: 13px; opacity: 0.9; line-height: 1.4;">
+            {% if otp_delivery_status == 'not_configured' %}
+                SMTP is not configured. Set <code>SMTP_EMAIL</code> and <code>SMTP_PASSWORD</code> in Railway Variables to send real emails.
+            {% elif otp_delivery_status == 'failed' %}
+                Email delivery failed. Use the code above to continue, and check your SMTP settings or app password.
+            {% elif otp_delivery_status == 'simulated_sms' %}
+                SMS delivery is currently simulated in this app. Use the code above to verify.
+            {% else %}
+                OTP is being shown because delivery could not be completed.
+            {% endif %}
         </div>
+        {% if otp_delivery_error %}
+        <div style="margin-top: 8px; font-size: 12px; color: #664d03; opacity: 0.8;">
+            Error: {{ otp_delivery_error }}
+        </div>
+        {% endif %}
     </div>
     {% endif %}
 

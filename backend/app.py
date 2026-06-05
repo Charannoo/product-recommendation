@@ -20,7 +20,7 @@ def load_env_file():
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:
                     key, val = line.split('=', 1)
-                    os.environ[key.strip()] = val.strip().strip("'\"")
+                    os.environ.setdefault(key.strip(), val.strip().strip("'\""))
 
 load_env_file()
 
@@ -1375,6 +1375,8 @@ def verify_otp():
         return redirect(url_for('login'))
     
     simulated_otp = session.get('simulated_otp')
+    otp_delivery_status = session.get('otp_delivery_status')
+    otp_delivery_error = session.get('otp_delivery_error')
         
     if request.method == 'POST':
         code = request.form.get('otp_code', '').strip()
@@ -1383,7 +1385,7 @@ def verify_otp():
         if int(time.time()) > pending.get('expires', 0):
             session.pop('pending_otp', None)
             session.pop('simulated_otp', None)
-            return render_template('verify_otp.html', error='OTP expired. Please request a new one.', show_debug=app.debug, pending=None, simulated_otp=None)
+            return render_template('verify_otp.html', error='OTP expired. Please request a new one.', show_debug=app.debug, pending=None, simulated_otp=None, otp_delivery_status=None, otp_delivery_error=None)
             
         # 2. Check attempts rate limit (brute force protection)
         attempts = pending.get('verify_attempts', 0) + 1
@@ -1393,7 +1395,7 @@ def verify_otp():
         if attempts > 5:
             session.pop('pending_otp', None)
             session.pop('simulated_otp', None)
-            return render_template('verify_otp.html', error='Too many incorrect OTP attempts. Please request a new one.', show_debug=app.debug, pending=None, simulated_otp=None)
+            return render_template('verify_otp.html', error='Too many incorrect OTP attempts. Please request a new one.', show_debug=app.debug, pending=None, simulated_otp=None, otp_delivery_status=None, otp_delivery_error=None)
             
         # 3. Verify OTP code
         if code == pending.get('code'):
@@ -1416,7 +1418,7 @@ def verify_otp():
                 except Exception as e:
                     print("DB insertion failed during registration:", e)
                     conn.close()
-                    return render_template('verify_otp.html', error='Failed to complete registration due to database error.', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp)
+                    return render_template('verify_otp.html', error='Failed to complete registration due to database error.', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp, otp_delivery_status=otp_delivery_status, otp_delivery_error=otp_delivery_error)
                 session['show_new_user_quiz'] = True
             else:
                 # Login: load profile info (or generate name from identifier)
@@ -1434,9 +1436,9 @@ def verify_otp():
             return redirect(url_for('index'))
         else:
             attempts_left = 5 - attempts
-            return render_template('verify_otp.html', error=f'Invalid OTP. {attempts_left} attempts remaining.', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp)
+            return render_template('verify_otp.html', error=f'Invalid OTP. {attempts_left} attempts remaining.', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp, otp_delivery_status=otp_delivery_status, otp_delivery_error=otp_delivery_error)
             
-    return render_template('verify_otp.html', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp)
+    return render_template('verify_otp.html', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp, otp_delivery_status=otp_delivery_status, otp_delivery_error=otp_delivery_error)
 
 
 @app.route('/debug/last_otp')
@@ -1476,6 +1478,9 @@ def send_otp_to_recipient(identifier, otp):
         smtp_email = os.environ.get('SMTP_EMAIL')
         smtp_password = os.environ.get('SMTP_PASSWORD')
         if not smtp_email or not smtp_password:
+            session['simulated_otp'] = otp
+            session['otp_delivery_status'] = 'not_configured'
+            session.pop('otp_delivery_error', None)
             print(f"⚠️ SMTP credentials not configured. Simulated OTP to Email [{identifier}]: {otp}")
             return True
         try:
@@ -1491,14 +1496,23 @@ def send_otp_to_recipient(identifier, otp):
             server.send_message(msg)
             server.quit()
 
+            session.pop('simulated_otp', None)
+            session['otp_delivery_status'] = 'sent'
+            session.pop('otp_delivery_error', None)
             print("✅ OTP sent to Gmail:", identifier)
             return True
         except Exception as e:
+            session['simulated_otp'] = otp
+            session['otp_delivery_status'] = 'failed'
+            session['otp_delivery_error'] = str(e)
             print("❌ Email error:", e)
             print(f"⚠️ Simulated fallback OTP to Email [{identifier}]: {otp}")
             return True
     else:
         # Mobile number flow (Simulated SMS delivery)
+        session['simulated_otp'] = otp
+        session['otp_delivery_status'] = 'simulated_sms'
+        session.pop('otp_delivery_error', None)
         print(f"📱 [SMS SIMULATION] Sent OTP to {identifier}: {otp}")
         return True
 
