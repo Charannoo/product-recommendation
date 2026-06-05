@@ -5,6 +5,7 @@ import glob
 import random
 import time
 import smtplib
+import requests
 from email.message import EmailMessage
 from flask import make_response
 from datetime import timedelta
@@ -1469,45 +1470,87 @@ def debug_set_pending_expiry():
     return jsonify({'success': True, 'new_expires': pending['expires']})
 
 
+def send_otp_via_sendgrid(to, subject, text, api_key, from_email):
+    resp = requests.post(
+        "https://api.sendgrid.com/v3/mail/send",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "personalizations": [{"to": [{"email": to}]}],
+            "from": {"email": from_email},
+            "subject": subject,
+            "content": [{"type": "text/plain", "value": text}]
+        },
+        timeout=15
+    )
+    return resp.status_code in (200, 201, 202)
+
 def send_otp_to_recipient(identifier, otp):
     if not identifier:
         return False
         
     if '@' in identifier:
-        # Email flow
+        sendgrid_key = os.environ.get('SENDGRID_API_KEY')
         smtp_email = os.environ.get('SMTP_EMAIL')
         smtp_password = os.environ.get('SMTP_PASSWORD')
-        if not smtp_email or not smtp_password:
-            session['simulated_otp'] = otp
-            session['otp_delivery_status'] = 'not_configured'
-            session.pop('otp_delivery_error', None)
-            print(f"[SMTP] Credentials not configured. Simulated OTP to Email [{identifier}]: {otp}")
-            return True
-        try:
-            msg = EmailMessage()
-            msg['Subject'] = 'Your SmartShop OTP'
-            msg['From'] = smtp_email
-            msg['To'] = identifier
-            msg.set_content(f'Your SmartShop OTP is: {otp}. It will expire in 2 minutes.')
+        from_email = smtp_email or os.environ.get('SENDGRID_FROM', 'noreply@smartshop.app')
+        subject = 'Your SmartShop OTP'
+        body = f'Your SmartShop OTP is: {otp}. It will expire in 2 minutes.'
 
-            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
-            server.starttls()
-            server.login(smtp_email, smtp_password)
-            server.send_message(msg)
-            server.quit()
+        # Try SendGrid HTTP API first (works on Railway, port 443)
+        if sendgrid_key:
+            try:
+                if send_otp_via_sendgrid(identifier, subject, body, sendgrid_key, from_email):
+                    session.pop('simulated_otp', None)
+                    session['otp_delivery_status'] = 'sent'
+                    session.pop('otp_delivery_error', None)
+                    print(f"[SendGrid] OTP sent to {identifier}")
+                    return True
+                raise Exception("SendGrid API returned non-success status")
+            except Exception as e:
+                session['simulated_otp'] = otp
+                session['otp_delivery_status'] = 'failed'
+                session['otp_delivery_error'] = str(e)
+                print(f"[SendGrid] Error: {e}")
+                print(f"[SendGrid] Fallback to simulated OTP for [{identifier}]: {otp}")
+                return True
 
-            session.pop('simulated_otp', None)
-            session['otp_delivery_status'] = 'sent'
-            session.pop('otp_delivery_error', None)
-            print(f"[SMTP] OTP sent to {identifier}")
-            return True
-        except Exception as e:
-            session['simulated_otp'] = otp
-            session['otp_delivery_status'] = 'failed'
-            session['otp_delivery_error'] = str(e)
-            print(f"[SMTP] Email error: {e}")
-            print(f"[SMTP] Simulated fallback OTP to Email [{identifier}]: {otp}")
-            return True
+        # Fallback to SMTP (Gmail)
+        if smtp_email and smtp_password:
+            try:
+                msg = EmailMessage()
+                msg['Subject'] = subject
+                msg['From'] = smtp_email
+                msg['To'] = identifier
+                msg.set_content(body)
+
+                server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
+                server.starttls()
+                server.login(smtp_email, smtp_password)
+                server.send_message(msg)
+                server.quit()
+
+                session.pop('simulated_otp', None)
+                session['otp_delivery_status'] = 'sent'
+                session.pop('otp_delivery_error', None)
+                print(f"[SMTP] OTP sent to {identifier}")
+                return True
+            except Exception as e:
+                session['simulated_otp'] = otp
+                session['otp_delivery_status'] = 'failed'
+                session['otp_delivery_error'] = str(e)
+                print(f"[SMTP] Email error: {e}")
+                print(f"[SMTP] Simulated fallback OTP to Email [{identifier}]: {otp}")
+                return True
+
+        # No email service configured — simulated OTP
+        session['simulated_otp'] = otp
+        session['otp_delivery_status'] = 'not_configured'
+        session.pop('otp_delivery_error', None)
+        print(f"[MAIL] No email service configured. Simulated OTP to Email [{identifier}]: {otp}")
+        return True
     else:
         # Mobile number flow (Simulated SMS delivery)
         session['simulated_otp'] = otp
