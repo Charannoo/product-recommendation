@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Your Account : SmartShop{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+    
+    <!-- Quiz Banner -->
+    <a href="/quiz" style="display: block; text-decoration: none; margin-bottom: 30px;">
+        <div style="background: linear-gradient(135deg, #a56df9 0%, #ffcda5 100%); border-radius: 12px; padding: 30px; color: white; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 25px rgba(165,109,249,0.2); transition: transform 0.2s;">
+            <div>
+                <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Not sure what to buy? ✨</h2>
+                <p style="margin: 0; font-size: 16px; opacity: 0.9;">Take our 5-step style & needs quiz to get instantly matched with the perfect products for you!</p>
+            </div>
+            <div style="background: white; color: #a56df9; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                Start Quiz <i class="fas fa-arrow-right" style="margin-left: 8px;"></i>
+            </div>
+        </div>
+    </a>
+
+    <h1 style="font-weight: normal; margin-bottom: 20px;">Your Account</h1>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+
+        <!-- Quiz Matcher -->
+        <a href="/quiz" style="text-decoration: none; color: inherit;">
+        <div style="border: 1px solid #D5D9D9; border-radius: 8px; padding: 20px; display: flex; gap: 15px; cursor: pointer; background: white;"
+            onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='white'">
+            <div style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: #f3e8ff; border-radius: 50%; color: #a56df9; font-size: 24px; flex-shrink: 0;">
+                <i class="fas fa-magic"></i>
+            </div>
+            <div>
+                <h3 style="margin: 0 0 5px 0; font-weight: normal; font-size: 18px;">Shopping Quiz</h3>
+                <p style="color: #565959; font-size: 14px; margin: 0;">Find perfect products matched to your budget and needs</p>
+            </div>
+        </div>
+        </a>
+
+        <!-- Lookbooks (Vibe Check) -->
+        <a href="/mood" style="text-decoration: none; color: inherit;">
+        <div style="border: 1px solid #D5D9D9; border-radius: 8px; padding: 20px; display: flex; gap: 15px; cursor: pointer; background: white;"
+            onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='white'">
+            <div style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: #e0f2fe; border-radius: 50%; color: #0284c7; font-size: 24px; flex-shrink: 0;">
+                <i class="fas fa-smile-beam"></i>
+            </div>
+            <div>
+                <h3 style="margin: 0 0 5px 0; font-weight: normal; font-size: 18px;">Vibe Check Lookbooks</h3>
+                <p style="color: #565959; font-size: 14px; margin: 0;">Discover items that match your current style vibe</p>
+            </div>
+        </div>
+        </a>
+
+        <!-- Security -->
+        <a href="/profile" style="text-decoration: none; color: inherit;">
+        <div style="border: 1px solid #D5D9D9; border-radius: 8px; padding: 20px; display: flex; gap: 15px; cursor: pointer; background: white;"
+            onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='white'">
+            <img src="{{ url_for('static', filename='icons/security.svg') }}"
+                style="width: 60px; height: 60px; flex-shrink: 0;">
+            <div>
+                <h3 style="margin: 0 0 5px 0; font-weight: normal; font-size: 18px;">Login & Security</h3>
+                <p style="color: #565959; font-size: 14px; margin: 0;">Edit login, name, and mobile number</p>
+            </div>
+        </div>
+        </a>
+
+    </div>
+
+    <!-- Recommendations -->
+    <div style="margin-top: 40px;">
+        <h2 style="font-weight: normal; font-size: 20px; margin-bottom: 20px;">Top recommendations for you</h2>
+        <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px;">
+            {% for r in recommendations %}
+            <div
+                style="min-width: 200px; max-width: 200px; border: 1px solid #ddd; text-align: center; border-radius: 8px; padding: 10px;">
+                <a href="/product/{{ r.id }}" style="text-decoration: none;">
+                    <img src="{{ r.image }}" alt="{{ r.name }}"
+                        style="width: 100%; height: 160px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;">
+                    <h4
+                        style="margin: 0 0 5px 0; font-size: 14px; color: #007185; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ r.name }}</h4>
+                    <div style="font-size: 16px; font-weight: bold; color: #B12704; margin-bottom: 10px;">₹{{ r.price }}
+                    </div>
+                </a>
+                <a href="/product/{{ r.id }}">
+                    <button
+                        style="width: 100%; padding: 6px; font-size: 12px; background-color: #FFD814; border: 1px solid #FCD200; border-radius: 20px;">View</button>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

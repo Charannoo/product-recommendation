@@ -1,0 +1,162 @@
+{% extends "auth_base.html" %}
+{% block title %}SmartShop Registration{% endblock %}
+
+{% block content %}
+<style>
+body {
+    background-color: #FFF6F0 !important;
+    background-image: url("{{ url_for('static', filename='shopping_cart.png') }}") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: cover !important;
+    background-attachment: fixed !important;
+    /* subtle gradient animation */
+    background: linear-gradient(45deg, #FFF6F0, #FFE0B2);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+}
+@keyframes gradientShift {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+.auth-container {
+    padding-top: 40px !important;
+    animation: fadeIn 0.8s ease forwards;
+}
+.form-box {
+    position: relative;
+    margin-top: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    animation: slideUp 0.8s ease forwards;
+    opacity: 0;
+}
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.auth-button {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+.auth-button:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+input, textarea {
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+input:focus, textarea:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 5px rgba(40,167,69,0.5);
+    outline: none;
+}
+</style>
+
+<div style="text-align: center; margin-bottom: 20px;">
+    <h1 style="font-size: 30px; margin-bottom: 0;">Smart<span style="color: #FF9900;">Shop</span></h1>
+</div>
+
+<div class="form-box">
+    <h2>Create account</h2>
+    
+    {% if error %}
+        <div style="color: #dc3545; font-size: 13px; margin-bottom: 15px; font-weight: 500; background: rgba(220, 53, 69, 0.1); padding: 8px 12px; border-radius: 6px;">
+            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        </div>
+    {% endif %}
+
+    <div id="js-error" style="color: #dc3545; font-size: 13px; margin-bottom: 15px; font-weight: 500; background: rgba(220, 53, 69, 0.1); padding: 8px 12px; border-radius: 6px; display: none;">
+        <i class="fas fa-exclamation-triangle"></i> <span id="js-error-text"></span>
+    </div>
+
+    <form method="POST">
+        <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Your name</label>
+        <input type="text" name="name" placeholder="First and last name" required>
+
+        <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Mobile number or
+            email</label>
+        <input type="text" name="email" value="{{ request.args.get('email', '') }}" placeholder="you@example.com or 10-digit mobile number" required>
+
+        <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Password</label>
+        <input type="password" name="password" placeholder="At least 6 characters" required>
+        <div style="font-size: 11px; margin-bottom: 15px; display: flex; align-items: center; gap: 5px;">
+            <i class="fas fa-info-circle" style="color: #007185;"></i> Passwords must be at least 6 characters.
+        </div>
+
+        <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Re-enter password</label>
+        <input type="password" name="confirm_password" required>
+
+        <button type="submit" class="auth-button">Continue</button>
+    </form>
+
+    <p style="font-size: 12px; margin-top: 20px; line-height: 1.5;">
+        By creating an account, you agree to SmartShop's <a href="#">Conditions of Use</a> and <a href="#">Privacy
+            Notice</a>.
+    </p>
+
+    <div style="margin-top: 20px; border-top: 1px solid #e7e7e7; padding-top: 15px; font-size: 13px;">
+        Already have an account? <a href="/login" style="font-weight: bold;">Sign in <i
+                class="fas fa-caret-right"></i></a>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const registerForm = document.querySelector('form');
+        const jsErrorDiv = document.getElementById('js-error');
+        const jsErrorText = document.getElementById('js-error-text');
+        
+        if (registerForm) {
+            registerForm.addEventListener('submit', (e) => {
+                const nameInput = registerForm.querySelector('input[name="name"]');
+                const identifierInput = registerForm.querySelector('input[name="email"]');
+                const passwordInput = registerForm.querySelector('input[name="password"]');
+                const confirmInput = registerForm.querySelector('input[name="confirm_password"]');
+                
+                const name = nameInput.value.trim();
+                const val = identifierInput.value.trim();
+                const pass = passwordInput.value.trim();
+                const confirm = confirmInput.value.trim();
+                
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                const mobileRegex = /^\d{10}$/;
+                
+                let errorMsg = '';
+                if (!name) {
+                    errorMsg = 'Your name is required.';
+                } else if (!val) {
+                    errorMsg = 'Mobile number or email is required.';
+                } else if (!emailRegex.test(val) && !mobileRegex.test(val)) {
+                    errorMsg = 'Please enter a valid email address or 10-digit mobile number.';
+                } else if (!pass) {
+                    errorMsg = 'Password is required.';
+                } else if (pass.length < 6) {
+                    errorMsg = 'Password must be at least 6 characters.';
+                } else if (pass !== confirm) {
+                    errorMsg = 'Passwords do not match.';
+                }
+                
+                if (errorMsg) {
+                    e.preventDefault();
+                    jsErrorText.textContent = errorMsg;
+                    jsErrorDiv.style.display = 'block';
+                    jsErrorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    return;
+                }
+                jsErrorDiv.style.display = 'none';
+            });
+        }
+    });
+</script>
+{% endblock %}

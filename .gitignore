@@ -1,0 +1,10 @@
+__pycache__/
+.venv/
+.env
+*.pyc
+*.pyo
+*.db
+!data/shop.db
+scratch/
+scripts/
+generated/

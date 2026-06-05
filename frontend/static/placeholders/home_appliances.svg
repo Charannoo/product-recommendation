@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <rect width="100%" height="100%" fill="#f0f9ff"/>
+  <g transform="translate(120,220)">
+    <rect x="80" y="40" width="640" height="320" rx="16" fill="#fff" stroke="#dbeafe" stroke-width="6"/>
+    <rect x="180" y="140" width="360" height="120" rx="8" fill="#eef2ff"/>
+  </g>
+  <text x="500" y="880" font-family="Segoe UI, Arial" font-size="46" text-anchor="middle" fill="#1e3a8a">Home Appliances</text>
+</svg>

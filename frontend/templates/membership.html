@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Membership : SmartShop{% endblock %}
+
+{% block content %}
+<div style="max-width:800px; margin:20px auto; padding:20px;">
+    <h1 style="font-weight:normal; margin-bottom:10px">Membership Benefits</h1>
+    <ul>
+        {% for b in benefits %}
+        <li>{{ b }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2 style="font-weight:normal; margin-top:20px">Payment Settings</h2>
+    {% if logged_in %}
+    <div style="border:1px solid #e5e7eb; padding:12px; border-radius:8px;">
+        {% for p in payment_methods %}
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f3f4f6"> 
+            <div>{{ p.label }}</div>
+            <div style="color:#6b7280">{{ p.expiry }}</div>
+        </div>
+        {% endfor %}
+        <div style="margin-top:12px">
+            <button style="padding:8px 12px; background:#111827; color:white; border-radius:6px;">Add payment method</button>
+        </div>
+    </div>
+    <div style="margin-top:18px; border:1px solid #e5e7eb; padding:12px; border-radius:8px;">
+        <h3 style="margin:0 0 8px 0; font-weight:600;">Default Payment Method</h3>
+        <form id="mem-payment-form">
+            <div style="display:flex; gap:12px; flex-direction:column;">
+                <label><input type="radio" name="mem_payment_method" value="cod" checked> Cash on Delivery</label>
+                <label><input type="radio" name="mem_payment_method" value="card"> Card</label>
+                <label><input type="radio" name="mem_payment_method" value="emi"> EMI (select cards)</label>
+
+                <div id="mem-card-fields" style="display:none; margin-top:8px;">
+                    <input name="mem_card_number" placeholder="Card number" style="width:100%; padding:8px; margin-bottom:6px;" />
+                    <div style="display:flex; gap:8px;"><input name="mem_expiry" placeholder="MM/YY" style="flex:1; padding:8px;" /><input name="mem_cvv" placeholder="CVV" style="width:120px; padding:8px;" /></div>
+                    <label style="margin-top:8px;"><input type="checkbox" id="mem-use-emi-checkbox" name="mem_use_emi"> Use EMI option</label>
+                    <div id="mem-emi-options" style="display:none; margin-top:8px;">
+                        <label>Choose EMI plan</label>
+                        <select name="mem_emi_plan" style="padding:8px; width:100%;">
+                            <option value="3">3 months</option>
+                            <option value="6">6 months</option>
+                            <option value="9">9 months</option>
+                            <option value="12">12 months</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <button type="submit" style="padding:8px 12px; background:#059669; color:white; border-radius:6px;">Save</button>
+                    <button type="button" id="mem-cancel" style="padding:8px 12px; background:#e5e7eb; border-radius:6px;">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <p>Please <a href="/login">log in</a> to view or manage payment settings.</p>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle card fields for membership payment settings
+    document.querySelectorAll('input[name=mem_payment_method]').forEach(r=>r.addEventListener('change', function(){
+        document.getElementById('mem-card-fields').style.display = (this.value==='card' || this.value==='emi') ? 'block' : 'none';
+        if(this.value==='emi') document.getElementById('mem-use-emi-checkbox').checked = true; else document.getElementById('mem-use-emi-checkbox').checked = false;
+    }));
+    document.getElementById('mem-use-emi-checkbox')?.addEventListener('change', function(){
+        document.getElementById('mem-emi-options').style.display = this.checked ? 'block' : 'none';
+    });
+
+    document.getElementById('mem-payment-form')?.addEventListener('submit', function(e){
+        e.preventDefault();
+        alert('Payment preference saved (demo).');
+    });
+    document.getElementById('mem-cancel')?.addEventListener('click', function(){
+        // reset form
+        document.getElementById('mem-payment-form').reset();
+        document.getElementById('mem-card-fields').style.display = 'none';
+        document.getElementById('mem-emi-options').style.display = 'none';
+    });
+</script>
+{% endblock %}

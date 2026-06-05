@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Shop by Mood - SmartShop{% endblock %}
+
+{% block content %}
+<style>
+    .mood-container {
+        max-width: 1000px;
+        margin: 60px auto;
+        padding: 40px 20px;
+        text-align: center;
+    }
+
+    .mood-header {
+        margin-bottom: 50px;
+    }
+    
+    .mood-header h1 {
+        font-size: 42px;
+        color: #1a202c;
+        margin-bottom: 15px;
+        font-weight: 800;
+    }
+    
+    .mood-header p {
+        font-size: 18px;
+        color: #4a5568;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .mood-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 30px;
+    }
+
+    .mood-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px 20px;
+        text-decoration: none;
+        color: #2d3748;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        border: 2px solid transparent;
+    }
+
+    .mood-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.05));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .mood-card:hover {
+        transform: translateY(-10px) scale(1.02);
+    }
+    .mood-card:hover::before {
+        opacity: 1;
+    }
+
+    /* Unique Mood Styles */
+    .mood-cool { border-color: #63b3ed; }
+    .mood-cool:hover { box-shadow: 0 15px 35px rgba(99, 179, 237, 0.3); }
+    .mood-cool .mood-emoji { background: #ebf8ff; color: #3182ce; }
+
+    .mood-professional { border-color: #a0aec0; }
+    .mood-professional:hover { box-shadow: 0 15px 35px rgba(160, 174, 192, 0.3); }
+    .mood-professional .mood-emoji { background: #f7fafc; color: #4a5568; }
+
+    .mood-party { border-color: #f687b3; }
+    .mood-party:hover { box-shadow: 0 15px 35px rgba(246, 135, 179, 0.3); }
+    .mood-party .mood-emoji { background: #fff5f7; color: #d53f8c; }
+
+    .mood-comfort { border-color: #68d391; }
+    .mood-comfort:hover { box-shadow: 0 15px 35px rgba(104, 211, 145, 0.3); }
+    .mood-comfort .mood-emoji { background: #f0fff4; color: #38a169; }
+
+    .mood-emoji {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        margin-bottom: 20px;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .mood-card:hover .mood-emoji {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .mood-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+    }
+
+    .mood-desc {
+        font-size: 14px;
+        color: #718096;
+        margin: 0;
+        line-height: 1.5;
+    }
+</style>
+
+<div class="mood-container">
+    <div class="mood-header">
+        <h1>Shop by Mood</h1>
+        <p>Don't want to think about categories? Just pick a vibe and we'll show you exactly the products that match your current energy.</p>
+    </div>
+
+    <div class="mood-grid">
+        <a href="/mood/cool" class="mood-card mood-cool">
+            <div class="mood-emoji">😎</div>
+            <h2 class="mood-title">Cool</h2>
+            <p class="mood-desc">Trending styles, fresh sneakers, and the latest gadgets.</p>
+        </a>
+
+        <a href="/mood/professional" class="mood-card mood-professional">
+            <div class="mood-emoji">💼</div>
+            <h2 class="mood-title">Professional</h2>
+            <p class="mood-desc">Sleek laptops, crisp shirts, and tools for success.</p>
+        </a>
+
+        <a href="/mood/party" class="mood-card mood-party">
+            <div class="mood-emoji">🎉</div>
+            <h2 class="mood-title">Party</h2>
+            <p class="mood-desc">Dresses, loud speakers, bold makeup, and celebration.</p>
+        </a>
+
+        <a href="/mood/comfort" class="mood-card mood-comfort">
+            <div class="mood-emoji">🧘</div>
+            <h2 class="mood-title">Comfort</h2>
+            <p class="mood-desc">Cozy wear, home appliances, plush toys, and relaxing reads.</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

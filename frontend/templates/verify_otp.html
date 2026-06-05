@@ -1,0 +1,125 @@
+{% extends "auth_base.html" %}
+{% block title %}Verify OTP - SmartShop{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #ffda66 !important;
+    }
+</style>
+<div style="text-align: center; margin-bottom: 20px;">
+    <h1 style="font-size: 24px; margin-bottom: 8px;">Enter the OTP</h1>
+
+    {% if pending %}
+        <p>
+            We sent a one-time password to 
+            <strong>{{ pending.recipient }}</strong>. 
+            It expires in 2 minutes.
+        </p>
+    {% else %}
+        <p>No OTP pending. Please <a href="/login">request a new OTP</a>.</p>
+    {% endif %}
+
+
+</div>
+
+
+<div class="form-box" style="max-width:420px; margin:0 auto;">
+    <form method="POST" action="/verify_otp">
+
+        <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">
+            One-time password
+        </label>
+
+        <input 
+            type="text" 
+            name="otp_code" 
+            maxlength="6"
+            pattern="\d{6}"
+            placeholder="Enter 6-digit code" 
+            required 
+            autofocus
+            style="width:100%; padding:10px; margin-bottom:12px;" 
+        />
+
+        <div style="display:flex; gap:8px;">
+            <button type="submit" class="auth-button">Verify</button>
+            <a href="/login">
+                <button type="button" style="background:#e5e7eb;">Cancel</button>
+            </a>
+        </div>
+    </form>
+
+    {% if error %}
+        <div style="color:red; margin-top:12px;">{{ error }}</div>
+    {% endif %}
+</div>
+
+
+<div style="max-width:420px; margin:10px auto; text-align:center;">
+    <button id="resend-btn">Resend OTP</button>
+
+    <div id="resend-msg"></div>
+    <div id="resend-timer"></div>
+</div>
+
+
+{% block scripts %}
+<script>
+
+async function updateResendStatus(){
+    try{
+        const r = await fetch('/resend_status');
+        const j = await r.json();
+
+        if(!j.has_pending){
+            document.getElementById('resend-btn').disabled = true;
+            document.getElementById('resend-msg').innerText = 'No OTP pending.';
+            document.getElementById('resend-msg').style.color = 'gray';
+            return;
+        }
+
+        if(j.seconds_left > 0){
+            document.getElementById('resend-btn').disabled = true;
+            document.getElementById('resend-msg').innerText = 'Wait ' + j.seconds_left + 's';
+            document.getElementById('resend-msg').style.color = '#767676';
+        } else {
+            document.getElementById('resend-btn').disabled = false;
+            const currentMsg = document.getElementById('resend-msg').innerText;
+            if (currentMsg !== 'OTP Sent!' && !currentMsg.startsWith('Maximum resend') && !currentMsg.startsWith('Max OTP limit')) {
+                document.getElementById('resend-msg').innerText = 'You can resend OTP';
+                document.getElementById('resend-msg').style.color = 'green';
+            }
+        }
+
+    }catch(e){
+        console.log(e);
+    }
+}
+
+document.getElementById('resend-btn').addEventListener('click', async function(){
+    try{
+        const res = await fetch('/resend_otp', { method: 'POST' });
+        const j = await res.json();
+
+        if(res.ok && j.success){
+            document.getElementById('resend-msg').innerText = 'OTP Sent!';
+            document.getElementById('resend-msg').style.color = 'green';
+        } else {
+            document.getElementById('resend-msg').innerText = j.error || 'Failed to resend OTP.';
+            document.getElementById('resend-msg').style.color = 'red';
+        }
+    }catch(e){
+        console.log(e);
+        document.getElementById('resend-msg').innerText = 'An error occurred. Please try again.';
+        document.getElementById('resend-msg').style.color = 'red';
+    }
+});
+
+updateResendStatus();
+setInterval(updateResendStatus, 3000);
+
+</script>
+{% endblock %}
+
+{% endblock %}

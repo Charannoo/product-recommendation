@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} - AI Product Discovery{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --page-pastel: #f8fafc;
+        --bg-color: var(--page-pastel);
+        --card-bg: #ffffff;
+        --card-border: rgba(0, 0, 0, 0.06);
+        --text-primary: #0f172a;
+        --text-secondary: #4b5563;
+        --glass-shadow: 0 6px 20px rgba(0,0,0,0.03);
+    }
+    
+    .pdp-grid-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+    }
+
+    @media (max-width: 850px) {
+        .pdp-grid-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Left Image & Trend Column */
+    .pdp-left-col {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .img-hero-wrapper {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--glass-shadow);
+        overflow: hidden;
+        position: relative;
+        cursor: crosshair;
+    }
+
+    .img-hero-wrapper img {
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: 8px;
+        transition: transform 0.1s ease;
+    }
+
+    /* Right Details Column */
+    .pdp-right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .rating-badge {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(255, 153, 0, 0.1);
+        color: #e67e22;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        width: fit-content;
+    }
+
+    .rec-card:hover .feedback-overlay {
+        opacity: 1 !important;
+    }
+    .rec-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.06) !important;
+    }
+    .rec-card {
+        transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s;
+    }
+</style>
+
+<div class="pdp-grid-container">
+    
+    <!-- Left Column: Media & Price Trends -->
+    <div class="pdp-left-col">
+        <div class="img-hero-wrapper" id="zoom-wrapper">
+            <img id="zoom-img" src="{{ product.image }}" alt="{{ product.name }}">
+        </div>
+        
+        <script>
+            const wrapper = document.getElementById('zoom-wrapper');
+            const img = document.getElementById('zoom-img');
+            wrapper.addEventListener('mousemove', function(e) {
+                const rect = wrapper.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+                img.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+                img.style.transform = 'scale(2)';
+            });
+            wrapper.addEventListener('mouseleave', function() {
+                img.style.transformOrigin = 'center center';
+                img.style.transform = 'scale(1)';
+            });
+        </script>
+        
+        <!-- Price History SVG Chart -->
+        <div class="price-history-chart" style="border:1px solid #edf2f7; border-radius:12px; padding:20px; background:white; box-shadow: var(--glass-shadow);">
+            <h3 style="font-size:16px; font-weight:700; color:#2d3748; margin:0 0 15px 0; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-chart-line" style="color:#FF9900;"></i> Historical Price Trend (6 Months)
+            </h3>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <div>
+                    <span style="font-size:12px; color:#718096; display:block;">Lowest price recorded</span>
+                    <span style="font-size:18px; font-weight:700; color:#10b981;">₹{{ lowest_price }}</span>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:12px; color:#718096; display:block;">Highest price recorded</span>
+                    <span style="font-size:18px; font-weight:700; color:#e53e3e;">₹{{ highest_price }}</span>
+                </div>
+            </div>
+            
+            <svg viewBox="0 0 500 150" style="width:100%; height:120px; overflow:visible;">
+                {% set min_val = lowest_price * 0.95 %}
+                {% set max_val = highest_price * 1.05 %}
+                {% set span = max_val - min_val if max_val > min_val else 1 %}
+                
+                <line x1="40" y1="20" x2="460" y2="20" stroke="#f1f5f9" stroke-dasharray="4"/>
+                <line x1="40" y1="70" x2="460" y2="70" stroke="#f1f5f9" stroke-dasharray="4"/>
+                <line x1="40" y1="120" x2="460" y2="120" stroke="#f1f5f9" stroke-dasharray="4"/>
+                
+                {% set pts = [] %}
+                {% for pt in history_trend %}
+                    {% set x = 40 + loop.index0 * 84 %}
+                    {% set y = 120 - ((pt.price - min_val) / span) * 100 %}
+                    {% set _ = pts.append(x ~ ',' ~ y) %}
+                {% endfor %}
+                
+                <polygon points="40,120 {{ pts|join(' ') }} 460,120" fill="url(#chart-grad)" opacity="0.08"/>
+                <polyline points="{{ pts|join(' ') }}" fill="none" stroke="#FF9900" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                
+                {% for pt in history_trend %}
+                    {% set x = 40 + loop.index0 * 84 %}
+                    {% set y = 120 - ((pt.price - min_val) / span) * 100 %}
+                    <circle cx="{{ x }}" cy="{{ y }}" r="4.5" fill="#FF9900" stroke="white" stroke-width="2"/>
+                    <text x="{{ x }}" y="{{ y - 10 }}" text-anchor="middle" font-size="9" font-weight="700" fill="#475569">₹{{ pt.price }}</text>
+                    <text x="{{ x }}" y="142" text-anchor="middle" font-size="10" fill="#94a3b8" font-weight="600">{{ pt.month }}</text>
+                {% endfor %}
+                
+                <defs>
+                    <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#FF9900"/>
+                        <stop offset="100%" stop-color="#ffffff"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Right Column: Info & AI Insights -->
+    <div class="pdp-right-col">
+        <div>
+            <div style="font-size: 13px; color: #FF9900; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">{{ brand_name }}</div>
+            <h1 style="margin: 0 0 12px 0; font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1.25;">{{ product.name }}</h1>
+            
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="rating-badge">
+                    <i class="fas fa-star" style="margin-right: 4px;"></i> {{ product.rating }} / 5.0
+                </div>
+                <span style="color:#64748b; font-size:14px; font-weight:500;">(Category: {{ product.category }})</span>
+            </div>
+        </div>
+        
+        <div style="border-top:1px solid #edf2f7; padding-top:15px;">
+            <span style="font-size:14px; color:#718096; display:block; margin-bottom:4px;">Average Market Price</span>
+            <div style="font-size: 32px; font-weight: 700; color: #2b6cb0;">
+                ₹{{ product.price }}
+            </div>
+        </div>
+        
+        <p style="color: var(--text-secondary); font-size: 15px; line-height: 1.6; margin: 0;">
+            {{ product.description }}
+        </p>
+        
+        <!-- Multi-Marketplace Redirection / Comparison Widget -->
+        <div style="border: 1px solid #edf2f7; border-radius: 12px; padding: 20px; background: white; box-shadow: var(--glass-shadow);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 2px solid #f8fafc; padding-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 15px; font-weight:700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-store" style="color: #FF9900;"></i> Compare Marketplace Prices
+                </h3>
+                <span style="font-size: 10px; background: #f0fdf4; color: #166534; padding: 3px 8px; border-radius: 20px; font-weight: bold; border:1px solid #bbf7d0;">LIVE SYNCED</span>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for m_name, m_info in competitor_prices.items() %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border: 1px solid #f1f5f9; border-radius: 8px; background: {% if m_name == cheapest_platform %}#fffbeb{% else %}#f8fafc{% endif %}; border-color: {% if m_name == cheapest_platform %}#fde047{% else %}#f1f5f9{% endif %};">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-weight: 700; color: #1e293b; font-size: 14px;">{{ m_name }}</span>
+                            {% if m_name == cheapest_platform %}
+                                <span style="font-size: 9px; background: #eab308; color: white; padding: 2px 6px; border-radius: 4px; font-weight: 800;">BEST VALUE</span>
+                            {% endif %}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="text-align: right;">
+                                <span style="font-weight: 700; font-size: 16px; color: {% if m_name == cheapest_platform %}#ca8a04{% else %}#475569{% endif %};">₹{{ m_info.price }}</span>
+                                <span style="display:block; font-size:9px; color:#94a3b8;">{{ m_info.discount }}% Off</span>
+                            </div>
+                            <button onclick="window.open('https://www.google.com/search?q={{ m_name }}+{{ product.name }}', '_blank')" style="background: #1e293b; color: white; border: none; padding: 7px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; display:flex; align-items:center; gap:4px; transition:background 0.2s;" onmouseover="this.style.background='#0f172a'" onmouseout="this.style.background='#1e293b'">
+                                Visit Store <i class="fas fa-external-link-alt" style="font-size: 9px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Wishlist Organizer -->
+        <div style="border: 1px solid #edf2f7; border-radius: 12px; padding: 20px; background: white; box-shadow: var(--glass-shadow);">
+            <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-heart" style="color: #e11d48;"></i> Organize to Custom Collection
+            </h4>
+            <div style="display: flex; gap: 10px;">
+                <select id="pdp-collection-select" style="flex: 1; padding: 10px; border: 1px solid #cbd5e0; border-radius: 8px; outline: none; background: white; font-size: 14px;">
+                    {% for name in collections %}
+                        <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="pdpAddToWishlist({{ product.id }})" style="background: #e11d48; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#be123c'" onmouseout="this.style.background='#e11d48'">
+                    Save Item
+                </button>
+            </div>
+        </div>
+        
+        <!-- AI Insights Card -->
+        <div class="ai-insights-card" style="border:1px solid #edf2f7; border-radius:12px; padding:20px; background:white; box-shadow: var(--glass-shadow);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
+                <div>
+                    <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin:0 0 4px 0; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-robot" style="color:#FF9900;"></i> AI Product Insights
+                    </h3>
+                    <p style="font-size:12px; color:#94a3b8; margin:0;">Automated features & sentiment summary</p>
+                </div>
+                
+                <!-- Circular Score Meter -->
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                    <svg width="60" height="60" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#f1f5f9" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#FF9900" stroke-width="8" 
+                                stroke-dasharray="251.2" 
+                                stroke-dashoffset="{{ 251.2 * (1 - ai_insights.score / 100) }}"
+                                stroke-linecap="round" 
+                                transform="rotate(-90 50 50)"/>
+                        <text x="50" y="58" text-anchor="middle" font-size="22" font-weight="bold" fill="#1e293b">{{ ai_insights.score }}%</text>
+                    </svg>
+                    <span style="font-size:8px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Score</span>
+                </div>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div style="background:#f0fdf4; border-left:4px solid #10b981; padding:10px; border-radius:4px;">
+                    <h4 style="margin:0 0 6px 0; color:#166534; font-size:13px;"><i class="fas fa-thumbs-up"></i> Pros</h4>
+                    <ul style="margin:0; padding-left:14px; font-size:12px; color:#14532d; line-height:1.4;">
+                        {% for pro in ai_insights.pros %}
+                            <li>{{ pro }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div style="background:#fef2f2; border-left:4px solid #ef4444; padding:10px; border-radius:4px;">
+                    <h4 style="margin:0 0 6px 0; color:#991b1b; font-size:13px;"><i class="fas fa-thumbs-down"></i> Cons</h4>
+                    <ul style="margin:0; padding-left:14px; font-size:12px; color:#7f1d1d; line-height:1.4;">
+                        {% for con in ai_insights.cons %}
+                            <li>{{ con }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; border-top:1px solid #f1f5f9; padding-top:12px;">
+                <div>
+                    <span style="font-size:11px; color:#94a3b8; display:block; font-weight:700; text-transform:uppercase;">Best Use Cases</span>
+                    <p style="font-size:12px; color:#334155; margin:3px 0 0 0; line-height:1.3; font-weight:500;">{{ ai_insights.use_cases }}</p>
+                </div>
+                <div>
+                    <span style="font-size:11px; color:#94a3b8; display:block; font-weight:700; text-transform:uppercase;">Target Audience</span>
+                    <p style="font-size:12px; color:#334155; margin:3px 0 0 0; line-height:1.3; font-weight:500;">{{ ai_insights.audience }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recommendations Ecosystem Tabs -->
+<div style="max-width: 1200px; margin: 60px auto; padding: 0 20px;">
+    
+    <div style="display:flex; gap:10px; border-bottom: 2px solid #e2e8f0; margin-bottom: 25px; padding-bottom: 10px;">
+        <button onclick="switchRecTab('explore')" id="tab-explore" style="background:none; border:none; padding:10px 20px; font-size:16px; font-weight:700; color:#FF9900; border-bottom:3px solid #FF9900; cursor:pointer;">Explore Similar Products</button>
+        <button onclick="switchRecTab('like')" id="tab-like" style="background:none; border:none; padding:10px 20px; font-size:16px; font-weight:700; color:#64748b; border-bottom:3px solid transparent; cursor:pointer;">You May Also Like</button>
+        <button onclick="switchRecTab('foryou')" id="tab-foryou" style="background:none; border:none; padding:10px 20px; font-size:16px; font-weight:700; color:#64748b; border-bottom:3px solid transparent; cursor:pointer;">Recommended For You</button>
+    </div>
+
+    <!-- Explore Similar -->
+    <div id="container-explore" class="rec-container-panel" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
+        {% for p in explore_similar %}
+            {{ render_rec_card(p) }}
+        {% endfor %}
+    </div>
+
+    <!-- You May Also Like -->
+    <div id="container-like" class="rec-container-panel" style="display:none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
+        {% for p in you_may_also_like %}
+            {{ render_rec_card(p) }}
+        {% endfor %}
+    </div>
+
+    <!-- Recommended For You -->
+    <div id="container-foryou" class="rec-container-panel" style="display:none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
+        {% if recommended_for_you %}
+            {% for p in recommended_for_you %}
+                {{ render_rec_card(p) }}
+            {% endfor %}
+        {% else %}
+            <p style="grid-column: 1/-1; text-align:center; color:#94a3b8; font-weight:600; padding:20px;">No personalized matches yet. Keep exploring to personalize your feed!</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Macro for rendering recommendation cards with Why recommended explanation & Feedback loops -->
+{% macro render_rec_card(p) %}
+<div class="rec-card" id="rec-card-{{ p.id }}" style="background:white; border:1px solid #edf2f7; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; position:relative; box-shadow: var(--glass-shadow);">
+    
+    <div style="position:relative; padding-top:85%; background:#f8fafc;">
+        <img src="{{ p.image }}" alt="{{ p.name }}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;">
+        
+        <!-- Feedback overlay: shows on card hover -->
+        <div class="feedback-overlay" style="position:absolute; top:8px; right:8px; display:flex; gap:6px; opacity:0; transition:opacity 0.2s; z-index:10;">
+            <button onclick="submitFeedback({{ p.id }}, 'helpful')" style="background:rgba(255,255,255,0.95); border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#10b981; box-shadow:0 2px 6px rgba(0,0,0,0.15);" title="Helpful">
+                <i class="fas fa-thumbs-up" style="font-size:11px;"></i>
+            </button>
+            <button onclick="submitFeedback({{ p.id }}, 'not_relevant')" style="background:rgba(255,255,255,0.95); border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#ef4444; box-shadow:0 2px 6px rgba(0,0,0,0.15);" title="Not Relevant">
+                <i class="fas fa-thumbs-down" style="font-size:11px;"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div style="padding:14px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+            <!-- Why We Recommended This Tag -->
+            <div style="font-size:10px; background:#fff7ed; color:#ea580c; border:1px solid #ffedd5; padding:4px 6px; border-radius:4px; font-weight:700; margin-bottom:8px; line-height:1.2;">
+                💡 {{ p.why_recommended or "Popular pick in this category" }}
+            </div>
+            
+            <h4 style="font-size:13px; font-weight:600; color:#1e293b; margin:0 0 6px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; height:36px; line-height:1.3;">
+                <a href="/product/{{ p.id }}" style="color:inherit; text-decoration:none;">{{ p.name }}</a>
+            </h4>
+            
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                <div style="color:#ffda66; font-size:11px;">
+                    {% for idx in range(1, 6) %}
+                        {% if p.rating >= idx %}
+                            <i class="fas fa-star"></i>
+                        {% elif p.rating >= idx - 0.5 %}
+                            <i class="fas fa-star-half-alt"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span style="color:#94a3b8; font-size:11px; font-weight:600;">({{ p.rating }})</span>
+            </div>
+        </div>
+        
+        <div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid #f1f5f9; padding-top:8px;">
+                <span style="font-weight:700; color:#2b6cb0; font-size:15px;">₹{{ p.price }}</span>
+                <span style="font-size:9px; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:4px; font-weight:bold;">COMPARED</span>
+            </div>
+            <a href="/product/{{ p.id }}" style="display:block; text-align:center; padding:7px; background:#f8fafc; border:1px solid #cbd5e0; color:#475569; font-weight:700; border-radius:6px; text-decoration:none; font-size:12px; margin-top:8px; transition:all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b'" onmouseout="this.style.background='#f8fafc'; this.style.color='#475569'">
+                View Product
+            </a>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+<script>
+    function switchRecTab(tabId) {
+        document.querySelectorAll('.rec-container-panel').forEach(p => p.style.display = 'none');
+        document.getElementById('container-' + tabId).style.display = 'grid';
+        
+        // Remove style highlights
+        const tabs = ['explore', 'like', 'foryou'];
+        tabs.forEach(t => {
+            const el = document.getElementById('tab-' + t);
+            if (t === tabId) {
+                el.style.color = '#FF9900';
+                el.style.borderBottomColor = '#FF9900';
+            } else {
+                el.style.color = '#64748b';
+                el.style.borderBottomColor = 'transparent';
+            }
+        });
+    }
+
+    function pdpAddToWishlist(productId) {
+        const colSelect = document.getElementById('pdp-collection-select');
+        const collectionName = colSelect ? colSelect.value : 'Favorites';
+        
+        fetch('/api/saved/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ product_id: productId, collection: collectionName })
+        }).then(r => r.json()).then(data => {
+            if(data.error === 'login_required'){
+                showToast('Please login to save to wishlist.');
+                window.location.href = '/login';
+            } else if (data.success) {
+                if (data.saved_count !== undefined) {
+                    var sc = document.getElementById('saved-count');
+                    if (sc) sc.innerText = data.saved_count;
+                }
+                showToast(`Saved to "${collectionName}" successfully!`);
+            }
+        }).catch(err => showToast("Error saving item to wishlist."));
+    }
+
+    function submitFeedback(productId, feedbackType) {
+        fetch('/api/recommendations/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ product_id: productId, feedback_type: feedbackType })
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                if (feedbackType === 'not_relevant') {
+                    showToast('Recommendation hidden. Customizing your recommendations feed...');
+                    // Fade out card immediately
+                    const card = document.getElementById('rec-card-' + productId);
+                    if (card) {
+                        card.style.opacity = '0';
+                        setTimeout(() => {
+                            card.style.display = 'none';
+                        }, 300);
+                    }
+                } else {
+                    showToast('Thank you for your feedback! Tuning our AI...');
+                }
+            }
+        }).catch(err => console.error("Error submitting recommendation feedback", err));
+    }
+</script>
+{% endblock %}

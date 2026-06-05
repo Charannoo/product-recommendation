@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <rect width="100%" height="100%" fill="#f8fafc"/>
+  <g transform="translate(140,220)">
+    <path d="M50 380c0-80 120-180 300-180s300 100 300 180" fill="#ffffff" stroke="#d1fae5" stroke-width="6"/>
+    <ellipse cx="350" cy="380" rx="260" ry="80" fill="#f3f4f6"/>
+    <rect x="60" y="100" width="540" height="140" rx="20" fill="#eef2ff"/>
+  </g>
+  <text x="500" y="880" font-family="Segoe UI, Arial" font-size="46" text-anchor="middle" fill="#0f172a">Shoes</text>
+</svg>

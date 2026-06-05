@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Order Confirmation : SmartShop{% endblock %}
+
+{% block content %}
+<div style="max-width:800px; margin:40px auto; padding:20px; background:white; border-radius:8px;">
+    <h1 style="font-weight:normal;">Thank you — your order is placed</h1>
+    <p>Your order ID: <strong>{{ order.id }}</strong></p>
+    <p>Payment method: <strong>{{ order.payment_method }}</strong></p>
+    <h3 style="margin-top:20px">Items</h3>
+    <ul>
+    {% for it in order.items %}
+        <li>{{ it.quantity }} × {{ it.name }} — ₹{{ it.price * it.quantity }}</li>
+    {% endfor %}
+    </ul>
+    <h3 style="margin-top:20px">Total: ₹{{ order.total }}</h3>
+    <div style="margin-top:20px; display:flex; gap:10px;"><a href="/dashboard" style="padding:10px 14px; background:#111827; color:white; border-radius:6px;">Back to Dashboard</a><a href="/products" style="padding:10px 14px; background:#FFD814; border-radius:6px;">Continue shopping</a></div>
+</div>
+{% endblock %}

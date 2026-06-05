@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#fff5f7"/>
+  
+  <g transform="translate(0, 20)">
+      <rect x="140" y="140" width="120" height="140" rx="15" fill="#fecdd3" stroke="#be123c" stroke-width="4"/>
+      <rect x="180" y="100" width="40" height="40" rx="5" fill="#fda4af" stroke="#be123c" stroke-width="4"/>
+      <circle cx="200" cy="70" r="25" fill="#ffe4e6" stroke="#be123c" stroke-width="4"/>
+      <path d="M 160 170 Q 200 210 240 170" fill="none" stroke="#be123c" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 160 185 Q 200 225 240 185" fill="none" stroke="#be123c" stroke-width="3" stroke-linecap="round"/>
+      <text x="200" y="240" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#881337" text-anchor="middle">ROSE</text>
+      <text x="200" y="260" font-family="Arial, sans-serif" font-size="12" fill="#881337" letter-spacing="2" text-anchor="middle">EAU DE PARFUM</text>
+  </g>
+</svg>

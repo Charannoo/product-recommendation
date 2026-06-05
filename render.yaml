@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: smartshop
+    runtime: python
+    region: singapore
+    buildCommand: python backend/inject_lookbooks.py
+    startCommand: gunicorn backend.app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: FLASK_SECRET_KEY
+        value: smartshop_secret_key
+      - key: SMTP_EMAIL
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.13.6

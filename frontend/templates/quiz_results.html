@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Your Product Matches{% endblock %}
+
+{% block content %}
+<style>
+    .quiz-results-header {
+        background: linear-gradient(135deg, #a56df9 0%, #ffcda5 100%);
+        padding: 40px 20px;
+        text-align: center;
+        border-radius: 12px;
+        margin: 20px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .quiz-results-header h1 {
+        font-size: 32px;
+        margin: 0 0 10px 0;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .quiz-results-header p {
+        font-size: 18px;
+        margin: 0;
+        opacity: 0.9;
+    }
+    
+    .stylist-banner {
+        max-width: 1400px;
+        margin: 20px auto 40px auto;
+        padding: 0 20px;
+    }
+    
+    .lookbook-container {
+        display: flex;
+        gap: 15px;
+        overflow-x: auto;
+        padding-bottom: 20px;
+    }
+    
+    .lookbook-item {
+        flex: 1;
+        min-width: 250px;
+        height: 350px;
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        text-decoration: none;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    }
+    
+    .lookbook-item:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+    
+    .lookbook-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .lookbook-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+        padding: 20px 15px;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        height: 100%;
+        box-sizing: border-box;
+        opacity: 0.95;
+        transition: opacity 0.3s;
+    }
+    
+    .lookbook-item:hover .lookbook-overlay {
+        opacity: 1;
+    }
+
+    .lookbook-category {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #cbd5e0;
+        margin-bottom: 4px;
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .lookbook-name {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        line-height: 1.2;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        text-align: left;
+    }
+
+    .lookbook-price {
+        font-size: 15px;
+        font-weight: 800;
+        color: #f6ad55;
+        text-align: left;
+    }
+
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 30px;
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .product-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+    }
+    
+    .product-image {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        background: #f8f9fa;
+        mix-blend-mode: multiply;
+    }
+    
+    .product-info {
+        padding: 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .product-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 10px 0;
+        color: #1a202c;
+        line-height: 1.4;
+    }
+    
+    .product-price {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a202c;
+        margin-top: auto;
+    }
+    
+    .product-category {
+        font-size: 13px;
+        color: #007185;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+</style>
+
+<div class="quiz-results-header">
+    <h1>{{ message }}</h1>
+
+</div>
+
+{% if women_outfit or men_outfit %}
+<div class="stylist-banner">
+    <h2 style="font-size: 28px; margin-bottom: 20px; font-weight: 800; color: #2d3748;">
+        <i class="fas fa-magic" style="color: #a56df9;"></i> Stylist's Picks
+    </h2>
+    <p style="color: #718096; margin-bottom: 30px; font-size: 16px;">We've put together these complete looks from your recommendations!</p>
+
+    {% if women_outfit %}
+    <h3 style="margin-bottom: 15px; font-size: 20px; color: black;"><i class="fas fa-female" style="color: #ed64a6;"></i> Women's Styled Look</h3>
+    <div class="lookbook-container" style="margin-bottom: 40px;">
+        {% for item in women_outfit %}
+            <a href="/product/{{ item.id }}" class="lookbook-item">
+                <img src="{{ item.image }}" alt="{{ item.name }}">
+                <div class="lookbook-overlay">
+                    <span class="lookbook-category">{{ item.category }}</span>
+                    <span class="lookbook-name">{{ item.name }}</span>
+                    <span class="lookbook-price">₹{{ item.price }}</span>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if men_outfit %}
+    <h3 style="margin-bottom: 15px; font-size: 20px; color: black;"><i class="fas fa-male" style="color: #4299e1;"></i> Men's Styled Look</h3>
+    <div class="lookbook-container">
+        {% for item in men_outfit %}
+            <a href="/product/{{ item.id }}" class="lookbook-item">
+                <img src="{{ item.image }}" alt="{{ item.name }}">
+                <div class="lookbook-overlay">
+                    <span class="lookbook-category">{{ item.category }}</span>
+                    <span class="lookbook-name">{{ item.name }}</span>
+                    <span class="lookbook-price">₹{{ item.price }}</span>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+<hr style="border: 0; height: 1px; background: #e2e8f0; max-width: 1400px; margin: 0 auto 40px auto;">
+{% endif %}
+
+<div class="products-grid">
+    {% for product in products %}
+    <a href="/product/{{ product.id }}" class="product-card">
+        <img src="{{ product.image }}" alt="{{ product.name }}" class="product-image">
+        <div class="product-info">
+            <div class="product-category">{{ product.category }}</div>
+            <h3 class="product-title">{{ product.name }}</h3>
+            
+            <div style="color: #FFA41C; font-size: 14px; margin-bottom: 10px;">
+                {% for _ in range(product.rating|int) %}<i class="fas fa-star"></i>{% endfor %}
+                {% if product.rating % 1 > 0 %}<i class="fas fa-star-half-alt"></i>{% endif %}
+                <span style="color: #666; margin-left: 5px;">{{ product.rating }}</span>
+            </div>
+            
+            <div class="product-price">₹{{ product.price }}</div>
+        </div>
+    </a>
+    {% else %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 50px;">
+        <i class="fas fa-search" style="font-size: 40px; color: #ccc; margin-bottom: 20px;"></i>
+        <h2 style="color: #555;">No perfect matches found.</h2>
+        <p style="color: #888;">Try taking the quiz again with different filters!</p>
+        <a href="/quiz" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #a56df9; color: white; border-radius: 6px; text-decoration: none; font-weight: bold;">Retake Quiz</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <rect width="100%" height="100%" fill="#f3f4f6"/>
+  <g transform="translate(120,200)">
+    <rect x="0" y="0" width="760" height="560" rx="28" fill="#ffffff" stroke="#e5e7eb" stroke-width="6"/>
+    <rect x="40" y="40" width="680" height="420" rx="8" fill="#f8fafc"/>
+    <rect x="80" y="484" width="600" height="40" rx="8" fill="#e6eef0"/>
+  </g>
+  <text x="500" y="880" font-family="Segoe UI, Arial" font-size="46" text-anchor="middle" fill="#6b7280">Electronics</text>
+</svg>

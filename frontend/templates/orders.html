@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Your Orders : SmartShop{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 20px auto; padding: 20px;">
+    <h1 style="font-weight: normal; margin-bottom: 20px;">Your Orders</h1>
+
+    {% if orders and orders|length > 0 %}
+    <div style="display: grid; gap: 12px;">
+        {% for o in orders %}
+        <div style="display:flex; gap:12px; border:1px solid #e5e7eb; padding:12px; border-radius:8px; align-items:center;">
+            <img src="{{ o.image }}" alt="{{ o.name }}" style="width:80px; height:80px; object-fit:cover; border-radius:6px;">
+            <div style="flex:1;">
+                <div style="font-size:16px; font-weight:600;">{{ o.name }}</div>
+                <div style="color:#6b7280;">Quantity: {{ o.quantity }}</div>
+                <div style="color:#b12704; font-weight:700; margin-top:6px;">₹{{ o.price }}</div>
+            </div>
+            <div>
+                <button onclick="location.href='/product/1'" style="padding:8px 12px; background:#ffd814; border-radius:6px; border:1px solid #fcd200">View</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>You have no orders yet. <a href="/home">Shop now</a></p>
+    {% endif %}
+
+</div>
+{% endblock %}

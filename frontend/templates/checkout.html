@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Checkout : SmartShop{% endblock %}
+
+{% block content %}
+<div style="max-width:900px; margin:20px auto; padding:20px; background:white; border-radius:8px;">
+    <h1 style="font-weight: normal; margin-bottom: 10px;">Checkout</h1>
+
+    <!-- Quick UPI Payment Section (client-side) -->
+    <div id="quick-upi" style="border:1px solid #e6e6e6; padding:16px; border-radius:8px; margin-bottom:18px; background:#fbfbfb;">
+        <h2 style="margin:0 0 8px 0; font-weight:600; font-size:18px;">Quick UPI Pay</h2>
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <div style="font-size:16px;">Merchant:</div>
+            <div style="font-weight:700;">SmartShop</div>
+            <div style="margin-left:auto; font-size:16px;">Amount:</div>
+            <div style="font-weight:700; color:#b12704;">₹{{ subtotal }}</div>
+        </div>
+
+        <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+            <input id="quick-upi-id" placeholder="Enter your UPI ID (alice@bank)" style="flex:1; padding:10px; border-radius:6px; border:1px solid #d1d5db;" />
+            <button id="quick-pay-btn" style="padding:10px 14px; background:#059669; color:white; border-radius:6px; border:none; font-weight:700;">Pay Now</button>
+        </div>
+
+        <div id="quick-upi-error" style="color:#b91c1c; display:none; margin-top:8px;">Please enter a valid UPI ID (must include '@').</div>
+
+        <div id="quick-upi-result" style="display:none; margin-top:14px; text-align:center;">
+            <img id="quick-upi-qr" src="" alt="UPI QR" style="width:220px; height:220px; border:1px solid #eee; display:block; margin:0 auto 12px;" />
+            <div id="quick-scan-instruction" style="display:none; margin-top:8px; font-weight:600; color:#111;">Scan this QR in your UPI app to complete the payment.</div>
+            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                <a id="quick-open-gpay" href="#" style="padding:10px 12px; background:#0ea5a3; color:white; border-radius:6px; text-decoration:none;">Google Pay</a>
+                <a id="quick-open-phonepe" href="#" style="padding:10px 12px; background:#3b82f6; color:white; border-radius:6px; text-decoration:none;">PhonePe</a>
+                <a id="quick-open-paytm" href="#" style="padding:10px 12px; background:#002a80; color:white; border-radius:6px; text-decoration:none;">Paytm</a>
+                <a id="quick-open-generic" href="#" style="padding:10px 12px; background:#059669; color:white; border-radius:6px; text-decoration:none;">Open UPI</a>
+            </div>
+            <div style="margin-top:10px; font-size:13px; color:#374151">If your UPI app doesn't open, scan the QR with your phone's UPI app.</div>
+        </div>
+    </div>
+
+    {% set items = session.get('cart') if session.get('cart') is not none else products[:1] %}
+    <div style="display:flex; gap:20px;">
+        <div style="flex:1">
+            <h3 style="font-weight:normal">Delivery & Items</h3>
+            {% for it in items %}
+            <div style="display:flex; gap:12px; align-items:center; border-bottom:1px solid #eee; padding:10px 0;">
+                <img src="{{ it.image }}" style="width:80px; height:80px; object-fit:cover;">
+                <div style="flex:1">
+                    <div style="font-weight:600">{{ it.name }}</div>
+                    <div>Qty: {{ it.quantity }}</div>
+                </div>
+                <div style="font-weight:700">₹{{ it.price * it.quantity }}</div>
+            </div>
+            {% endfor %}
+
+            <h3 style="font-weight:normal; margin-top:20px">Payment</h3>
+            <form method="post" action="/checkout" id="checkout-form">
+                <input type="hidden" name="emi" id="emi-field" value="{{ request.args.get('emi') or '' }}">
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <label><input type="radio" name="payment_method" value="cod" checked> Cash on Delivery</label>
+                    <label><input type="radio" name="payment_method" value="card"> Card</label>
+                    <label><input type="radio" name="payment_method" value="emi"> EMI (Available on select cards)</label>
+
+
+                    <div id="card-fields" style="display:none; margin-top:8px;">
+                        <input name="card_number" placeholder="Card number" style="width:100%; padding:8px; margin-bottom:6px;" />
+                        <div style="display:flex; gap:8px;"><input name="expiry" placeholder="MM/YY" style="flex:1; padding:8px;" /><input name="cvv" placeholder="CVV" style="width:120px; padding:8px;" /></div>
+                        <label style="margin-top:8px;"><input type="checkbox" id="use-emi-checkbox" name="use_emi"> Use EMI option</label>
+                        <div id="emi-options" style="display:none; margin-top:8px;">
+                            <label>Choose EMI plan</label>
+                            <select name="emi_plan" style="padding:8px; width:100%;">
+                                <option value="3">3 months</option>
+                                <option value="6">6 months</option>
+                                <option value="9">9 months</option>
+                                <option value="12">12 months</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" style="padding:12px 16px; background:#FFD814; border:1px solid #FCD200; border-radius:8px; font-weight:700;">Pay / Place Order</button>
+                </div>
+            </form>
+        </div>
+
+        <div style="width:320px;">
+            <div style="border:1px solid #eee; padding:12px; border-radius:8px;">
+                <div style="font-weight:700; font-size:18px;">Order Summary</div>
+                <div style="margin-top:10px; display:flex; justify-content:space-between;"><span>Items total</span><span>₹{{ subtotal }}</span></div>
+                <div style="margin-top:6px; display:flex; justify-content:space-between;"><span>Delivery</span><span>FREE</span></div>
+                <hr>
+                <div style="display:flex; justify-content:space-between; font-weight:700; font-size:18px;"> <span>Grand Total</span><span>₹{{ subtotal }}</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('input[name=payment_method]').forEach(r=>r.addEventListener('change', function(){
+        document.getElementById('card-fields').style.display = (this.value==='card' || this.value==='emi') ? 'block' : 'none';
+        if(this.value==='emi') document.getElementById('use-emi-checkbox').checked = true;
+        else document.getElementById('use-emi-checkbox').checked = false;
+    }));
+    document.getElementById('use-emi-checkbox')?.addEventListener('change', function(){
+        document.getElementById('emi-options').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Checkout form submit validation
+    document.getElementById('checkout-form').addEventListener('submit', function(e){
+        var pm = document.querySelector('input[name=payment_method]:checked').value;
+        // For card/emi we could add validation later; currently allow submission
+        return true;
+    });
+
+    // --- Quick UPI Pay client-side logic ---
+    function buildUpiUri(vpa, name, amount, txn) {
+        var pa = encodeURIComponent(vpa);
+        var pn = encodeURIComponent(name);
+        var am = encodeURIComponent(amount);
+        var tn = encodeURIComponent(txn || 'Payment to ' + name);
+        return 'upi://pay?pa=' + pa + '&pn=' + pn + '&am=' + am + '&tn=' + tn + '&cu=INR';
+    }
+
+    function qrForUpi(upiUri){
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(upiUri);
+    }
+
+    function tryOpenUrl(url){
+        // Attempt to open via location change then iframe fallback
+        try{ window.location.href = url; }catch(e){}
+        setTimeout(function(){
+            var ifr = document.createElement('iframe'); ifr.style.display='none'; ifr.src = url; document.body.appendChild(ifr);
+            setTimeout(function(){ try{ document.body.removeChild(ifr);}catch(e){} }, 1500);
+        }, 500);
+    }
+
+    document.getElementById('quick-pay-btn').addEventListener('click', async function(){
+        var vpa = document.getElementById('quick-upi-id').value.trim();
+        if(!vpa || vpa.indexOf('@') === -1){
+            document.getElementById('quick-upi-error').style.display = 'block';
+            return;
+        }
+        document.getElementById('quick-upi-error').style.display = 'none';
+        var merchant = 'SmartShop';
+        var amount = '{{ subtotal }}';
+
+        try{
+            const res = await fetch('/api/quick_upi', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ upi_id: vpa, merchant: merchant, amount: amount })
+            });
+            const data = await res.json();
+            if(res.status !== 200){
+                document.getElementById('quick-upi-error').innerText = data.error || 'Unable to initiate UPI';
+                document.getElementById('quick-upi-error').style.display = 'block';
+                return;
+            }
+
+            var upiUri = data.upi_uri;
+            var qr = data.qr;
+            var orderId = data.order_id;
+
+            document.getElementById('quick-upi-qr').src = qr;
+            document.getElementById('quick-open-generic').href = upiUri;
+            document.getElementById('quick-scan-instruction').innerText = 'Scan this QR in your UPI app to pay to ' + vpa;
+            document.getElementById('quick-scan-instruction').style.display = 'block';
+
+            var pa = encodeURIComponent(vpa);
+            var intentGPay = 'intent://upi/pay?pa=' + pa + '&pn=' + encodeURIComponent(merchant) + '&am=' + encodeURIComponent(amount) + '#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end';
+            var intentPhonePe = 'intent://pay?pa=' + pa + '&pn=' + encodeURIComponent(merchant) + '&am=' + encodeURIComponent(amount) + '#Intent;scheme=upi;package=com.phonepe.app;end';
+            var intentPaytm = 'intent://upipay?pa=' + pa + '&pn=' + encodeURIComponent(merchant) + '&am=' + encodeURIComponent(amount) + '#Intent;scheme=upi;package=net.one97.paytm;end';
+
+            document.getElementById('quick-open-gpay').onclick = function(e){ e.preventDefault(); tryOpenUrl(intentGPay); };
+            document.getElementById('quick-open-phonepe').onclick = function(e){ e.preventDefault(); tryOpenUrl(intentPhonePe); };
+            document.getElementById('quick-open-paytm').onclick = function(e){ e.preventDefault(); tryOpenUrl(intentPaytm); };
+
+            // Show confirm link (user returns after paying). Create a confirm link using GET
+            document.getElementById('quick-upi-result').style.display = 'block';
+            // Replace generic open with order-specific confirm on return
+            document.getElementById('quick-open-generic').addEventListener('click', function(){ setTimeout(function(){ window.location.href = '/checkout/confirm?order_id=' + orderId; }, 1000); });
+
+            // Auto attempt open sequence on Android Chrome
+            var isAndroidChrome = /Android/.test(navigator.userAgent) && /Chrome\//.test(navigator.userAgent);
+            var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if(isAndroidChrome){
+                setTimeout(function(){ tryOpenUrl(intentGPay); }, 600);
+                setTimeout(function(){ tryOpenUrl(intentPhonePe); }, 1200);
+                setTimeout(function(){ tryOpenUrl(intentPaytm); }, 1800);
+                setTimeout(function(){ tryOpenUrl(upiUri); }, 2400);
+            } else if(isMobile){
+                setTimeout(function(){ tryOpenUrl(upiUri); }, 800);
+            }
+
+        }catch(err){
+            document.getElementById('quick-upi-error').innerText = 'Error initiating UPI payment';
+            document.getElementById('quick-upi-error').style.display = 'block';
+            document.getElementById('quick-scan-instruction').style.display = 'none';
+            console.error(err);
+        }
+    });
+</script>
+
+{% endblock %}

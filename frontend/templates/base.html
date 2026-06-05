@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - SmartShop</title>
+    <!-- Use Inter font which matches the clean UI style of the screenshot -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='chatbot.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #a56df9 0%, #ffcda5 100%);
+            /* Background gradient to match splash */
+            background-attachment: fixed;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #0F1111;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007185;
+        }
+
+        a:hover {
+            color: #C7511F;
+            text-decoration: underline;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background-color: #131921;
+            /* Amazon's dark blue nav */
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            height: 60px;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none !important;
+        }
+
+        .logo span {
+            color: #FF9900;
+            /* Amazon Orange accent */
+        }
+
+        /* Search Bar & Filter */
+        .nav-search {
+            display: flex;
+            flex: 1;
+            margin: 0 20px;
+            max-width: 600px; /* Constrain wide search bar */
+            overflow: visible !important; /* Fix dropdown clipping caused by style.css */
+        }
+
+        .filter-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-search button.filter-btn {
+            background-color: #f3f4f6 !important;
+            color: #333 !important;
+            padding: 0 15px;
+            font-size: 14px;
+            border: none;
+            border-right: 1px solid #ccc;
+            border-radius: 4px 0 0 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            height: 100%;
+            background-image: none !important;
+            pointer-events: auto;
+            position: relative;
+            z-index: 1300; /* ensure button is above the input */
+        }
+        
+        .nav-search button.filter-btn:hover {
+            background-color: #e5e7eb !important;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 400px; /* Wider for mega menu */
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1400;
+            border-radius: 4px;
+            top: 100%;
+            left: 0;
+            margin-top: 2px;
+            padding: 15px;
+            display: none; /* Hide by default */
+            grid-template-columns: 1fr 1fr; /* Two columns for categories */
+            gap: 20px;
+        }
+
+        .filter-dropdown:hover .dropdown-content {
+            display: grid; /* Show on hover */
+        }
+
+        /* Allow programmatic open (for click/tap) */
+        .filter-dropdown.open .dropdown-content {
+            display: grid;
+        }
+        
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #111;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+        }
+
+        .filter-section a {
+            color: #333;
+            padding: 6px 0;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .filter-section a:hover {
+            color: #007185;
+            text-decoration: underline;
+        }
+
+        .nav-search input {
+            flex: 1 1 auto;
+            min-width: 0; /* prevents input from overflowing and covering adjacent buttons */
+            padding: 10px 15px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            box-sizing: border-box;
+            border-radius: 0;
+            position: relative;
+            z-index: 100; /* keep below the filter button */
+        }
+
+        .nav-search button.search-btn {
+            background-color: #FEBD69;
+            /* Amazon's search button orange */
+            border: none;
+            padding: 0 15px;
+            cursor: pointer;
+            color: #333;
+            font-size: 16px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-search button.search-btn:hover {
+            background-color: #F3A847;
+        }
+
+        /* Make search icon smaller and fix button width */
+        .search-btn {
+            padding: 0 15px !important;
+            width: 45px !important; /* Fix button taking 100% width from general style */
+            min-width: 45px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-btn i {
+            font-size: 14px !important;
+        }
+
+        /* Nav Links */
+        .nav-right ul {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-right a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-right a span {
+            font-size: 12px;
+            font-weight: normal;
+            color: #ccc;
+        }
+
+        .nav-right a:hover {
+            text-decoration: none;
+            border-radius: 2px;
+            outline: 1px solid white;
+            padding: 2px;
+            margin: -3px;
+            /* counteract padding */
+        }
+
+        .cart-icon {
+            font-size: 24px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cart-icon:hover {
+            color: white;
+        }
+
+        /* FOOTER */
+        footer {
+            background-color: #232F3E;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+            font-size: 14px;
+        }
+        
+        /* Secondary Category Navbar */
+        .category-bar {
+            background-color: #232F3E;
+            color: white;
+            display: flex;
+            gap: 25px;
+            padding: 10px 20px;
+            align-items: center;
+            overflow-x: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .category-bar .category-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: white;
+            min-width: 70px;
+            gap: 5px;
+            transition: opacity 0.2s;
+        }
+        .category-bar .category-item:hover {
+            opacity: 0.8;
+            text-decoration: none;
+        }
+        .category-bar .category-item img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+            background-color: white;
+        }
+        .category-item.active img, .category-bar .category-item:hover img {
+            border-color: #FF9900;
+        }
+        .category-bar .category-item span {
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body class="{% if active_category %}category-bg-{{ active_category|lower|replace(' ', '-') }}{% endif %}">
+
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="/dashboard" title="Home" style="color: white; margin-right: 10px; display:flex; align-items:center;">
+                <i class="fas fa-home" style="font-size:20px; color: white;"></i>
+            </a>
+            <a href="/home" class="logo">Smart<span>Shop</span></a>
+        </div>
+
+        <div class="nav-search">
+            <div class="filter-dropdown">
+                <button type="button" id="filterToggle" class="filter-btn">
+                    <i class="fas fa-filter"></i> <i class="fas fa-caret-down" style="font-size: 10px; margin-left: 2px;"></i>
+                </button>
+                <div class="dropdown-content">
+                    <!-- Column 1 -->
+                    {% set current_q = request.args.get('search') or request.args.get('val') %}
+                    {% set preserve_params = ('&category=' ~ active_category|urlencode if active_category else '') ~ ('&search=' ~ current_q|urlencode if current_q else '') %}
+                    <div>
+                        <div class="filter-section">
+                            <div class="filter-section-title">Brand</div>
+                            <a href="/products?brand=Samsung{{ preserve_params }}">Samsung</a>
+                            <a href="/products?brand=Apple{{ preserve_params }}">Apple</a>
+                            <a href="/products?brand=Nike{{ preserve_params }}">Nike</a>
+                            <a href="/products?brand=Sony{{ preserve_params }}">Sony</a>
+                        </div>
+                        <div class="filter-section" style="margin-top: 15px;">
+                            <div class="filter-section-title">Discount</div>
+                            <a href="/products?discount=25{{ preserve_params }}">25% off</a>
+                            <a href="/products?discount=30{{ preserve_params }}">30% off</a>
+                            <a href="/products?discount=40{{ preserve_params }}">40% off</a>
+                        </div>
+                    </div>
+                    <!-- Column 2 -->
+                    <div>
+                        <div class="filter-section">
+                            <div class="filter-section-title">Price</div>
+                            <a href="/products?price=under_1000{{ preserve_params }}">Under ₹1000</a>
+                            <a href="/products?price=1000_5000{{ preserve_params }}">₹1000 - ₹5000</a>
+                            <a href="/products?price=over_5000{{ preserve_params }}">Over ₹5000</a>
+                        </div>
+                        <div class="filter-section" style="margin-top: 15px;">
+                            <div class="filter-section-title">Rating</div>
+                            <a href="/products?rating=4{{ preserve_params }}">4★ and above</a>
+                            <a href="/products?rating=3{{ preserve_params }}">3★ and above</a>
+                            <a href="/products?rating=2{{ preserve_params }}">2★ and above</a>
+                        </div>
+                        <div class="filter-section" style="margin-top: 15px;">
+                            <div class="filter-section-title">Popularity / Trending</div>
+                            <a href="/products?popularity=bestsellers{{ preserve_params }}">Best sellers</a>
+                            <a href="/products?popularity=trending{{ preserve_params }}">Trending products</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form class="search-form" method="get" action="/products" style="display:flex; flex:1; gap:0; align-items:center; margin:0; padding:0;">
+                <input name="search" type="text" placeholder="Search SmartShop" style="height: 100%; border-radius: 0; padding: 10px 15px; outline: none; border: none; flex: 1;" required value="{{ request.args.get('search', request.args.get('val', '')) }}">
+                <button type="submit" class="search-btn" style="height: 100%; border-radius: 0 4px 4px 0;"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
+
+        <div class="nav-right">
+            <ul>
+                <li>
+                    {% if session.get('user') %}
+                    <div class="profile-dropdown" style="position: relative; display: inline-block;">
+                        <a href="/profile" style="color: white; text-decoration: none; display: flex; flex-direction: column; align-items: flex-start;">
+                            <span><i class="fas fa-user-circle"></i> Profile</span>
+                            Account
+                        </a>
+                        <div class="profile-dropdown-content" style="display: none; position: absolute; background-color: white; min-width: 250px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1400; border-radius: 4px; top: 100%; right: -50px; margin-top: 10px; padding: 15px; color: #333; text-align: left;">
+                            <div style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+                                <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px; color: #111;">{{ session.get('user_name', 'Guest User') }}</div>
+                                <div style="font-size: 13px; color: #444; margin-bottom: 3px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-envelope" style="width: 14px; text-align: center; color: #666;"></i> {{ session.get('user') if '@' in session.get('user', '') else 'user@smartshop.com' }}</div>
+                                <div style="font-size: 13px; color: #444; margin-bottom: 3px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-phone" style="width: 14px; text-align: center; color: #666;"></i> {{ session.get('user') if '@' not in session.get('user', '') else '+91 9876543210' }}</div>
+                                <div style="font-size: 13px; color: #444; display: flex; align-items: center; gap: 8px;"><i class="fas fa-map-marker-alt" style="width: 14px; text-align: center; color: #666;"></i> 123 SmartShop St, Tech City</div>
+                            </div>
+                            <a href="/orders" style="display: flex; align-items: center; gap: 10px; color: #333; padding: 8px 0; text-decoration: none; font-size: 14px; font-weight: 500;"><i class="fas fa-box" style="width: 16px; text-align: center; color: #007185;"></i> Your Orders</a>
+                            <a href="/logout" style="display: flex; align-items: center; gap: 10px; color: #e11d48; padding: 8px 0; text-decoration: none; font-size: 14px; font-weight: 500;"><i class="fas fa-sign-out-alt" style="width: 16px; text-align: center;"></i> Sign out</a>
+                        </div>
+                    </div>
+                    <style>
+                        .profile-dropdown:hover .profile-dropdown-content { display: block !important; }
+                    </style>
+                    {% else %}
+                    <a href="/login">
+                        <span><i class="fas fa-user-circle"></i> Hello, sign in</span>
+                        Account & Lists
+                    </a>
+                    {% endif %}
+                </li>
+                <li>
+                    <a href="/admin">
+                        <span><i class="fas fa-user-shield"></i> Seller Central</span>
+                        Admin Panel
+                    </a>
+                </li>
+                <li>
+                    <a href="/dashboard">
+                        <span><i class="fas fa-undo-alt"></i> Returns</span>
+                        & Recommendations
+                    </a>
+                </li>
+                <li style="margin-left: 10px;">
+                    <a href="/products">All Products</a>
+                </li>
+                <li style="margin-left: 6px;">
+                    <a href="/saved" style="position: relative; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-heart" style="font-size: 22px; color: #e11d48;"></i>
+                        <span id="saved-count" style="position: absolute; top: -6px; left: 14px; background-color: #e11d48; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold;">0</span>
+                        <span style="color: white; font-weight: bold; font-size: 16px; margin-left: 10px;">Wishlist</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    
+        
+    <div class="category-bar" style="justify-content: center; gap: 30px;">
+        <a href="/quiz" class="category-item" style="color: #FF9900; transform: scale(1.05);">
+            <i class="fas fa-magic" style="font-size: 36px; margin-bottom: 8px; text-shadow: 0 0 10px rgba(255,153,0,0.5);"></i>
+            <span style="font-weight: bold;">Take Quiz</span>
+        </a>
+        <a href="/mood" class="category-item" style="color: #63b3ed; transform: scale(1.05);">
+            <i class="fas fa-smile-beam" style="font-size: 36px; margin-bottom: 8px; text-shadow: 0 0 10px rgba(99,179,237,0.5);"></i>
+            <span style="font-weight: bold;">Vibe Check</span>
+        </a>
+        <div style="width: 1px; height: 40px; background: rgba(255,255,255,0.2); margin: 0 5px;"></div>
+        <a href="/products?category=Electronics" class="category-item {% if active_category == 'Electronics' %}active{% endif %}">
+            <i class="fas fa-laptop" style="font-size: 36px; margin-bottom: 8px;"></i>
+            <span>Electronics</span>
+        </a>
+        <a href="/products?category=Books" class="category-item {% if active_category == 'Books' %}active{% endif %}">
+            <i class="fas fa-book" style="font-size: 36px; margin-bottom: 8px;"></i>
+            <span>Books</span>
+        </a>
+        <a href="/products?category=Home Appliances" class="category-item {% if active_category == 'Home Appliances' %}active{% endif %}">
+            <i class="fas fa-blender" style="font-size: 36px; margin-bottom: 8px;"></i>
+            <span>Appliances</span>
+        </a>
+        <a href="/products?category=Beauty" class="category-item {% if active_category == 'Beauty' %}active{% endif %}">
+            <i class="fas fa-spa" style="font-size: 36px; margin-bottom: 8px;"></i>
+            <span>Beauty</span>
+        </a>
+        <a href="/products?category=Women Fashion" class="category-item {% if active_category == 'Women Fashion' %}active{% endif %}">
+            <i class="fas fa-female" style="font-size: 36px; margin-bottom: 8px;"></i>
+            <span>Women</span>
+        </a>
+        <a href="/products?category=Men Fashion" class="category-item {% if active_category == 'Men Fashion' %}active{% endif %}">
+            <i class="fas fa-user-tie" style="font-size: 36px; margin-bottom: 8px;"></i>
+            <span>Men</span>
+        </a>
+        <a href="/products?category=Kidsware" class="category-item {% if active_category == 'Kidsware' %}active{% endif %}">
+            <i class="fas fa-baby" style="font-size: 36px; margin-bottom: 8px;"></i>
+            <span>Kidsware</span>
+        </a>
+        <a href="/products?category=Toys" class="category-item {% if active_category == 'Toys' %}active{% endif %}">
+            <i class="fas fa-gamepad" style="font-size: 36px; margin-bottom: 8px;"></i>
+            <span>Toys</span>
+        </a>
+        <a href="/products?category=Shoes" class="category-item {% if active_category == 'Shoes' %}active{% endif %}">
+            <i class="fas fa-shoe-prints" style="font-size: 36px; margin-bottom: 8px;"></i>
+            <span>Shoes</span>
+        </a>
+    </div>
+
+    
+
+    <div id="toast" style="visibility: hidden; background-color: #4CAF50; color: white; text-align: center; border-radius: 2px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; font-size: 17px; transform: translateX(-50%);">
+    <i class="fas fa-check-circle"></i> Item added to your cart successfully!
+</div>
+<div class="main-content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer>
+        <p>© 2026 SmartShop | Powered by Group-3</p>
+    </footer>
+
+    <!-- Filter dropdown toggle (click/tap) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var toggle = document.getElementById('filterToggle');
+            if (!toggle) return;
+            var dropdown = toggle.closest('.filter-dropdown');
+
+            toggle.addEventListener('click', function (ev) {
+                ev.stopPropagation();
+                dropdown.classList.toggle('open');
+            });
+
+            // Close when clicking outside
+                document.addEventListener('click', function () {
+                    if (dropdown.classList.contains('open')) dropdown.classList.remove('open');
+                });
+
+                // Prevent clicks inside dropdown from closing
+                var content = dropdown.querySelector('.dropdown-content');
+                if (content) content.addEventListener('click', function (ev) { ev.stopPropagation(); });
+
+                // Touch support
+                toggle.addEventListener('touchstart', function (ev) { ev.stopPropagation(); dropdown.classList.toggle('open'); });
+        });
+    </script>
+
+    <!-- WISHLIST LOGIC -->
+    <script>
+        const isLoggedIn = {{ 'true' if session.get('user') else 'false' }};
+
+        async function refreshSavedCount() {
+            try {
+                const res = await fetch('/api/saved/count');
+                const data = await res.json();
+                const count = data.saved_count || 0;
+                const sc = document.getElementById('saved-count');
+                if (sc) sc.innerText = count;
+            } catch (err) {
+                console.error('Failed to fetch wishlist count', err);
+            }
+        }
+
+        // Fetch count on load
+        if (isLoggedIn) {
+            refreshSavedCount();
+        }
+
+        async function addToCart(productId, collection = 'Favorites') {
+            if (!productId) {
+                console.error('addToCart called without productId');
+                return;
+            }
+            if (!isLoggedIn) {
+                showToast('Please sign in to save products to your wishlist.');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1500);
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/saved/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId, collection: collection })
+                });
+
+                const data = await res.json();
+                if (data && data.saved_count !== undefined) {
+                    const sc = document.getElementById('saved-count');
+                    if (sc) sc.innerText = data.saved_count;
+                    showToast('Product added to your wishlist successfully!');
+                }
+            } catch (err) {
+                console.error('Failed to save product', err);
+            }
+        }
+
+        function showToast(msg) {
+            var toast = document.getElementById("toast");
+            if (msg) {
+                toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + msg;
+            } else {
+                toast.innerHTML = '<i class="fas fa-check-circle"></i> Product saved to wishlist!';
+            }
+            toast.style.visibility = "visible";
+            setTimeout(function () { toast.style.visibility = "hidden"; }, 3000);
+        }
+
+        async function deleteFromWishlist(productId) {
+            try {
+                const res = await fetch('/api/saved/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({product_id: productId})
+                });
+                const data = await res.json();
+                if (data && data.saved_count !== undefined) {
+                    const sc = document.getElementById('saved-count');
+                    if (sc) sc.innerText = data.saved_count;
+                }
+                location.reload();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Stub out deprecated functions to prevent console/runtime crashes in legacy page scripts
+        async function deleteFromCart(productId) { return deleteFromWishlist(productId); }
+        async function saveForLater(productId) { return Promise.resolve(); }
+        async function moveSavedToCart(productId) { return Promise.resolve(); }
+    </script>
+
+    <script src="{{ url_for('static', filename='chatbot.js') }}"></script>
+</body>
+
+</html>

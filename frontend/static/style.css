@@ -1,0 +1,348 @@
+/* Base styles */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #EAEDED;
+    /* Amazon's light gray background */
+    color: #0F1111;
+    /* Amazon's text color */
+}
+
+a {
+    text-decoration: none;
+    color: #007185;
+}
+
+a:hover {
+    color: #C7511F;
+    text-decoration: underline;
+}
+
+/* NAVBAR */
+.navbar {
+    background-color: #131921;
+    /* Amazon's dark blue nav */
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    height: 60px;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none !important;
+}
+
+.logo span {
+    color: #FF9900;
+    /* Amazon Orange accent */
+}
+
+/* Search Bar */
+.nav-search {
+    display: flex;
+    flex: 1;
+    margin: 0 20px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.nav-search input {
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+}
+
+.nav-search button {
+    background-color: #FEBD69;
+    /* Amazon's search button orange */
+    border: none;
+    padding: 0 15px;
+    cursor: pointer;
+    color: #333;
+    font-size: 16px;
+}
+
+.nav-search button:hover {
+    background-color: #F3A847;
+}
+
+/* Nav Links */
+.nav-right ul {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-right a {
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-right a span {
+    font-size: 12px;
+    font-weight: normal;
+    color: #ccc;
+}
+
+.nav-right a:hover {
+    text-decoration: none;
+    border-radius: 2px;
+    outline: 1px solid white;
+    padding: 2px;
+    margin: -3px;
+    /* counteract padding */
+}
+
+.cart-icon {
+    font-size: 24px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* MAIN */
+.main-content {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* HERO SECTION */
+.hero {
+    background: url('https://m.media-amazon.com/images/I/71Ie3JXGfVL._SX3000_.jpg') center center/cover no-repeat;
+    height: 300px;
+    position: relative;
+    margin-bottom: -150px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);
+}
+
+.hero-content {
+    display: none;
+    /* Hide old text hero */
+}
+
+/* CARDS */
+.card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    position: relative;
+    z-index: 2;
+    padding: 0 20px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card h3 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+}
+
+.card .price {
+    font-size: 24px;
+    color: #B12704;
+    /* Amazon Red Price */
+    margin-bottom: 15px;
+}
+
+.card .price span {
+    font-size: 14px;
+    vertical-align: super;
+}
+
+button {
+    background-color: #FFD814;
+    /* Amazon Yellow Button */
+    border: 1px solid #FCD200;
+    border-radius: 100px;
+    padding: 8px 15px;
+    color: #0F1111;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(213, 217, 217, .5);
+    width: 100%;
+}
+
+button:hover {
+    background-color: #F7CA00;
+}
+
+/* FORMS */
+.form-box {
+    max-width: 350px;
+    margin: 40px auto;
+    background: white;
+    padding: 25px 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.form-box h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    margin-top: 0;
+}
+
+.form-box input {
+    width: 100%;
+    padding: 8px 10px;
+    margin-bottom: 15px;
+    border-radius: 3px;
+    border: 1px solid #888C8C;
+    box-sizing: border-box;
+    /* fix width issue */
+}
+
+.form-box input:focus {
+    border-color: #e77600;
+    box-shadow: 0 0 3px 2px rgba(228, 121, 17, .5);
+    outline: none;
+}
+
+.auth-button {
+    background-color: #FFD814;
+    border-color: #FCD200;
+    margin-top: 10px;
+}
+
+/* FOOTER */
+footer {
+    background-color: #232F3E;
+    color: white;
+    text-align: center;
+    padding: 30px;
+    margin-top: 40px;
+    font-size: 14px;
+}
+
+/* TOAST NOTIFICATION */
+#toast {
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: -125px;
+    background-color: #067D62;
+    /* Success green */
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    bottom: 30px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: opacity 0.5s, bottom 0.5s;
+}
+
+#toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+}
+
+/* Category background helpers */
+.product-card.bg-clothing,
+.product-list-item.bg-clothing {
+    background-color: #FCE4EC; /* soft pink */
+    color: #0f172a;
+}
+
+.product-card.bg-electronics,
+.product-list-item.bg-electronics {
+    background-color: #EBF5FF; /* light blue */
+    color: #0f172a;
+}
+
+.product-card.bg-beauty,
+.product-list-item.bg-beauty {
+    background-color: #F3E8FF; /* lavender */
+    color: #0f172a;
+}
+
+.product-card.bg-books,
+.product-list-item.bg-books {
+    background-color: #FFF9C4; /* soft yellow */
+    color: #0f172a;
+}
+
+.product-card.bg-home-appliances,
+.product-list-item.bg-home-appliances {
+    background-color: #E6F9E9; /* pale green */
+    color: #0f172a;
+}
+
+/* Default for unknown categories keeps existing card styles */
+.product-list-item {
+    background: white;
+}
+
+/* Full-page category backgrounds applied to body when filtered */
+body.category-bg-clothing {
+    background: linear-gradient(180deg, #FCE4EC 0%, #FFF5F8 100%) !important;
+}
+
+body.category-bg-electronics {
+    background: linear-gradient(180deg, #EBF5FF 0%, #F7FBFF 100%) !important;
+}
+
+/* Map Men/Women/Kids/Toys/Shoes to electronics pastel */
+body.category-bg-men-fashion,
+body.category-bg-women-fashion,
+body.category-bg-kidsware,
+body.category-bg-toys,
+body.category-bg-shoes {
+    background: linear-gradient(180deg, #EBF5FF 0%, #F7FBFF 100%) !important;
+}
+
+body.category-bg-beauty {
+    background: linear-gradient(180deg, #F3E8FF 0%, #FFF5FF 100%) !important;
+}
+
+body.category-bg-books {
+    background: linear-gradient(180deg, #FFF9C4 0%, #FFFEED 100%) !important;
+}
+
+body.category-bg-home-appliances {
+    background: linear-gradient(180deg, #E6F9E9 0%, #F9FFFB 100%) !important;
+}
+
+/* Ensure text remains readable on lighter backgrounds */
+body.category-bg-clothing, body.category-bg-electronics, body.category-bg-beauty, body.category-bg-books, body.category-bg-home-appliances {
+    color: #0f172a;
+}

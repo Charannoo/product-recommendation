@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}SmartShop Shopping Cart{% endblock %}
+
+{% block content %}
+
+<div style="display: flex; gap: 20px; align-items: flex-start;">
+
+    <!-- Left Cart Area -->
+    <div style="flex: 1; background: white; padding: 20px; border-radius: 8px;">
+        <h1
+            style="font-size: 28px; font-weight: normal; margin: 0 0 5px 0; padding-bottom: 15px; border-bottom: 1px solid #ddd;">
+            Shopping Cart</h1>
+        <p style="text-align: right; font-size: 14px; color: #565959; margin-bottom: 15px;">Price</p>
+
+        {% for item in items %}
+        <div
+            style="display: flex; gap: 20px; border-bottom: 1px solid #ddd; padding-bottom: 20px; margin-bottom: 20px;">
+
+            <!-- Checkbox + Image -->
+            <div style="display: flex; gap: 15px;">
+                <input type="checkbox" checked style="margin-top: 5px;">
+                <div
+                    style="width: 150px; height: 150px; background: #f8f8f8; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <img src="{{ item.image }}" alt="{{ item.name }}"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div style="flex: 1;">
+                <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: normal; color: #007185;">{{ item.name }}
+                </h3>
+                <p style="color: #007600; font-size: 12px; margin: 5px 0;">In Stock</p>
+                <p style="color: #565959; font-size: 12px; margin: 5px 0;">Eligible for FREE Shipping</p>
+                <!-- Actions -->
+                <div
+                    style="display: flex; gap: 15px; align-items: center; margin-top: 15px; font-size: 12px; color: #007185;">
+                    <select
+                        style="padding: 5px; border-radius: 8px; background: #F0F2F2; border: 1px solid #D5D9D9; margin-right: 10px;">
+                        <option {% if item.quantity==1 %}selected{% endif %}>1</option>
+                        <option {% if item.quantity==2 %}selected{% endif %}>2</option>
+                        <option {% if item.quantity==3 %}selected{% endif %}>3</option>
+                        <option {% if item.quantity==4 %}selected{% endif %}>4</option>
+                        <option {% if item.quantity==5 %}selected{% endif %}>5</option>
+                    </select>
+                    <a href="javascript:void(0)" onclick="deleteFromCart({{ item.id }})">Delete</a> |
+                    <a href="javascript:void(0)" onclick="saveForLater({{ item.id }})">Save for later</a> |
+                    <a href="#">See more like this</a>
+                </div>
+            </div>
+
+            <!-- Price -->
+            <div style="font-size: 18px; font-weight: bold; color: #0F1111;">
+                ₹{{ item.price }}
+            </div>
+
+        </div>
+        {% endfor %}
+
+        <!-- Subtotal inside left area -->
+        <h3 style="text-align: right; font-weight: normal; font-size: 18px; margin-top: 20px;">
+            Subtotal ({{ total_items }} item{% if total_items > 1%}s{% endif %}): <strong>₹{{ subtotal }}</strong>
+        </h3>
+    </div>
+
+    <!-- Right Checkout Area -->
+    <div style="width: 300px; background: white; padding: 20px; border-radius: 8px; text-align: center;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <i class="fas fa-check-circle" style="color: #067D62; font-size: 20px;"></i>
+            <span style="font-size: 12px; color: #067D62; text-align: left;">Part of your order qualifies for FREE
+                Delivery.</span>
+        </div>
+
+        <h3 style="font-weight: normal; font-size: 18px; margin-bottom: 15px;">
+            Subtotal ({{ total_items }} item{% if total_items > 1%}s{% endif %}): <strong>₹{{ subtotal }}</strong>
+        </h3>
+
+        <a href="/checkout" style="display:block; width: 100%; margin-bottom: 15px; text-align:center; background-color: #FFD814; border: 1px solid #FCD200; border-radius: 10px; padding: 8px; color: #111; font-weight:700;">Proceed to Buy</a>
+
+        <a href="/checkout?emi=1" style="display:block; border: 1px solid #ddd; padding: 10px; border-radius: 5px; font-size: 14px; text-align: left; color:inherit; text-decoration:none;">EMI Available</a>
+    </div>
+
+</div>
+
+<!-- MORE LIKE THIS SECTION -->
+<div style="margin-top: 40px; background: white; padding: 20px; border-radius: 8px;">
+    <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">More items to explore</h2>
+    <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px;">
+        {% for p in products %}
+        <div style="min-width: 200px; max-width: 200px;">
+            <a href="/product/{{ p.id }}">
+                <img src="{{ p.image }}" alt="{{ p.name }}"
+                    style="width: 100%; height: 180px; object-fit: cover; margin-bottom: 15px; border-radius: 4px;">
+            </a>
+            <a href="/product/{{ p.id }}"
+                style="color: #007185; font-size: 14px; text-decoration: none; display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ p.name }}
+            </a>
+            <div style="color: #FFA41C; margin-bottom: 5px; font-size: 12px;">
+                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                    class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                <span style="color: #007185; margin-left: 5px;">{{ p.rating }}</span>
+            </div>
+            <div style="font-size: 18px; color: #B12704; font-weight: bold; margin-bottom: 10px;">
+                ₹{{ p.price }}
+            </div>
+            <button onclick="addToCart({{ p.id }})"
+                style="width: 100%; background-color: #FFD814; border: 1px solid #FCD200; border-radius: 20px; padding: 6px; font-size: 12px; cursor: pointer;">Add
+                to Cart</button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

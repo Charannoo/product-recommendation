@@ -1,0 +1,402 @@
+{% extends "auth_base.html" %}
+{% block title %}SmartShop Sign-In{% endblock %}
+
+{% block content %}
+<style>
+    #toast {
+        display: none !important;
+    }
+
+    /* Lamp and Room Styles */
+    body {
+        margin: 0;
+        overflow-x: hidden;
+    }
+
+    /* Dark overlay starts fully opaque */
+    #dark-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #0b0b0f;
+        z-index: 10;
+        transition: background-color 2s ease-out, opacity 2s ease-out;
+        pointer-events: none; /* Allows clicks to pass through to the light switch */
+    }
+
+    .room.light-on #dark-overlay {
+        background-color: #ffda66; /* Yellowish gold */
+    }
+
+    /* Lamp container positioned at top center */
+    .lamp-container {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20; /* Above dark overlay */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 200px;
+        transition: opacity 0.2s ease-out;
+    }
+
+    @media (max-height: 680px) {
+        .lamp-wire {
+            height: 50px !important;
+        }
+        .lamp-shade {
+            width: 80px !important;
+            height: 48px !important;
+        }
+        .lamp-cord {
+            height: 80px !important;
+        }
+        .lamp-cord-wrapper {
+            top: 50px !important;
+        }
+        .login-container-wrapper {
+            margin-top: 150px !important;
+        }
+    }
+
+    .lamp-wire {
+        width: 4px;
+        height: 100px;
+        background: #333;
+        position: relative;
+    }
+
+    .lamp-shade {
+        width: 100px;
+        height: 60px;
+        background: #2c2c2c;
+        border-bottom: 4px solid #1a1a1a;
+        border-radius: 5px 5px 0 0;
+        clip-path: polygon(20% 0, 80% 0, 100% 100%, 0% 100%);
+        position: relative;
+        z-index: 2;
+        box-shadow: inset 0 -5px 10px rgba(0,0,0,0.5);
+    }
+
+    .lamp-bulb {
+        width: 40px;
+        height: 40px;
+        background: #444;
+        border-radius: 50%;
+        margin-top: -20px; /* Tuck inside shade */
+        transition: background 0.3s, box-shadow 0.3s;
+        z-index: 1;
+        cursor: pointer;
+    }
+
+    .room.light-on .lamp-bulb {
+        background: #fffacd;
+        box-shadow: 0 0 50px 20px rgba(255, 250, 205, 0.9), 0 0 120px 60px rgba(255, 250, 205, 0.5);
+    }
+
+    .lamp-cord-wrapper {
+        position: absolute;
+        top: 100px; /* Matches lamp-wire height */
+        left: 50%;
+        transform: translateX(-20px); 
+        cursor: pointer;
+        padding: 0 20px 20px 20px; /* Expand click area */
+        z-index: 30; /* Ensure it is clickable above everything */
+    }
+
+    .lamp-cord {
+        width: 2px;
+        height: 120px;
+        background: #888;
+        margin: 0 auto;
+        position: relative;
+        transition: height 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .lamp-bob {
+        width: 14px;
+        height: 14px;
+        background: #d4af37; /* Gold finish */
+        border-radius: 50%;
+        position: absolute;
+        bottom: -7px;
+        left: -6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    /* Cord pull down visual feedback */
+    .lamp-cord-wrapper:active .lamp-cord {
+        height: 140px;
+    }
+
+    .login-container-wrapper {
+        position: relative;
+        z-index: 15;
+        opacity: 0;
+        transform: translateY(40px);
+        transition: opacity 2s ease-out, transform 2s ease-out;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        margin-top: 250px; /* Space for lamp */
+    }
+
+    .room.light-on .login-container-wrapper {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto; /* Enable interaction once visible */
+    }
+
+    /* Hide the default auth-container padding from auth_base if needed */
+    .auth-container {
+        padding-top: 0 !important;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.6);
+        backdrop-filter: blur(10px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+    .modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+    .modal-content-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        width: 90%;
+        max-width: 450px;
+        text-align: center;
+        position: relative;
+        transform: scale(0.8);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .modal-overlay.active .modal-content-card {
+        transform: scale(1);
+    }
+    .close-modal-btn {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        background: none;
+        border: none;
+        font-size: 28px;
+        color: #999;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .close-modal-btn:hover {
+        color: #333;
+    }
+    .modal-icon-container {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-size: 32px;
+    }
+</style>
+
+<div class="room" id="roomEnv">
+    <div id="dark-overlay"></div>
+    
+    <div class="lamp-container">
+        <div class="lamp-wire"></div>
+        <div class="lamp-shade"></div>
+        <div class="lamp-bulb" id="lampBulb" title="Click to toggle light"></div>
+        
+        <div class="lamp-cord-wrapper" id="lampPull" title="Pull to turn on the light">
+            <div class="lamp-cord">
+                <div class="lamp-bob"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-container-wrapper">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="font-size: 30px; margin-bottom: 0; color: #111;" id="main-title">Smart<span style="color: #FF9900;">Shop</span></h1>
+        </div>
+
+        <div class="form-box">
+            <h2>Sign in</h2>
+            
+            {% if error %}
+                <div style="color: #dc3545; font-size: 13px; margin-bottom: 15px; font-weight: 500; background: rgba(220, 53, 69, 0.1); padding: 8px 12px; border-radius: 6px;">
+                    <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                </div>
+            {% endif %}
+
+            <div id="js-error" style="color: #dc3545; font-size: 13px; margin-bottom: 15px; font-weight: 500; background: rgba(220, 53, 69, 0.1); padding: 8px 12px; border-radius: 6px; display: none;">
+                <i class="fas fa-exclamation-triangle"></i> <span id="js-error-text"></span>
+            </div>
+
+            <form method="POST" id="loginForm">
+                <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Email or mobile phone
+                    number</label>
+                <input type="text" name="email" value="{{ entered_identifier or '' }}" placeholder="you@example.com or 9123456789" required>
+
+                <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Password</label>
+                <input type="password" name="password" required>
+
+                <div
+                    style="font-size: 12px; margin-top: 15px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 8px;">
+                    <input type="checkbox" id="agree_terms" required
+                        style="margin-top: 2px; width: auto; flex-shrink: 0; box-sizing: border-box;">
+                    <label for="agree_terms" style="line-height: 1.5;">By continuing, you agree to SmartShop's <a
+                            href="#">Conditions of Use</a> and <a href="#">Privacy Notice</a>.</label>
+                </div>
+
+                <button type="submit" class="auth-button">Continue</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 25px; position: relative;">
+                <hr style="border: 0; border-top: 1px solid #e7e7e7; position: absolute; width: 100%; top: 50%; z-index: 1;">
+                <span
+                    style="background: white; padding: 0 10px; color: #767676; font-size: 12px; position: relative; z-index: 2;">New
+                    to SmartShop?</span>
+            </div>
+
+            <a href="/register">
+                <button style="margin-top: 15px; background: #EEF1F2; border-color: #A6A6A6; width: 100%; color: #111;" class="auth-button">Create your
+                    SmartShop account</button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Modal for Account Not Found -->
+<div id="account-not-found-modal" class="modal-overlay {% if show_not_found_modal %}active{% endif %}">
+    <div class="modal-content-card">
+        <button class="close-modal-btn" onclick="closeNotFoundModal()" aria-label="Close modal">&times;</button>
+        <div class="modal-icon-container" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2 style="color: #dc3545; margin-top: 15px; font-size: 22px;">Account Not Found</h2>
+        <p style="margin: 15px 0 25px 0; color: #555; font-size: 15px; line-height: 1.5;">
+            Account not found. Please register to continue.
+        </p>
+        <div class="modal-footer-action" style="display: flex; gap: 12px; justify-content: center; width: 100%;">
+            <a href="/register?email={{ entered_identifier or '' }}" class="auth-button" style="background: #28a745; border-color: #28a745; color: white; display: inline-block; width: auto; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: 600; text-align: center; line-height: 1.2;">Register Now</a>
+            <button class="btn-skip" onclick="closeNotFoundModal()" style="background: #e5e7eb; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; color: #333;">Try Again</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function closeNotFoundModal() {
+        const modal = document.getElementById('account-not-found-modal');
+        modal.classList.remove('active');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const pullCord = document.getElementById("lampPull");
+        const lampBulb = document.getElementById("lampBulb");
+        const roomEnv = document.getElementById("roomEnv");
+        
+        let isLightOn = false;
+        
+        // Scroll fade listener to prevent form overlap
+        window.addEventListener('scroll', () => {
+            const scrollPos = window.scrollY;
+            const lamp = document.querySelector('.lamp-container');
+            if (lamp) {
+                const opacity = Math.max(0, 1 - scrollPos / 200);
+                lamp.style.opacity = opacity;
+                if (opacity === 0) {
+                    lamp.style.pointerEvents = 'none';
+                } else {
+                    lamp.style.pointerEvents = 'auto';
+                }
+            }
+        });
+
+        const formBox = document.querySelector('.form-box');
+        const inputs = formBox.querySelectorAll('input, button, a');
+        inputs.forEach(el => el.tabIndex = -1);
+        
+        function toggleLight() {
+            if (!isLightOn) {
+                setTimeout(() => {
+                    roomEnv.classList.add("light-on");
+                    isLightOn = true;
+                    inputs.forEach(el => el.removeAttribute('tabIndex'));
+                }, 250);
+            } else {
+                roomEnv.classList.remove("light-on");
+                isLightOn = false;
+                inputs.forEach(el => el.tabIndex = -1);
+            }
+        }
+
+        pullCord.addEventListener("click", toggleLight);
+        lampBulb.addEventListener("click", toggleLight);
+
+        pullCord.addEventListener("touchstart", toggleLight, {passive: true});
+        lampBulb.addEventListener("touchstart", toggleLight, {passive: true});
+
+        // Auto light-on if error or modal is shown
+        const hasError = {% if error %}true{% else %}false{% endif %};
+        const hasModal = {% if show_not_found_modal %}true{% else %}false{% endif %};
+        if (hasError || hasModal) {
+            roomEnv.classList.add("light-on");
+            isLightOn = true;
+            inputs.forEach(el => el.removeAttribute('tabIndex'));
+        }
+
+        // Frontend JS validation
+        const loginForm = document.getElementById('loginForm');
+        const jsErrorDiv = document.getElementById('js-error');
+        const jsErrorText = document.getElementById('js-error-text');
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                const identifierInput = loginForm.querySelector('input[name="email"]');
+                const passwordInput = loginForm.querySelector('input[name="password"]');
+                const val = identifierInput.value.trim();
+                const pass = passwordInput.value.trim();
+                
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                const mobileRegex = /^\d{10}$/;
+                
+                let errorMsg = '';
+                if (!val) {
+                    errorMsg = 'Email or mobile phone number is required.';
+                } else if (!emailRegex.test(val) && !mobileRegex.test(val)) {
+                    errorMsg = 'Please enter a valid email address or 10-digit mobile number.';
+                } else if (!pass) {
+                    errorMsg = 'Password is required.';
+                }
+                
+                if (errorMsg) {
+                    e.preventDefault();
+                    jsErrorText.textContent = errorMsg;
+                    jsErrorDiv.style.display = 'block';
+                    return;
+                }
+                jsErrorDiv.style.display = 'none';
+            });
+        }
+    });
+</script>
+{% endblock %}

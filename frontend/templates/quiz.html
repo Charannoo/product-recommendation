@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% block title %}SmartShop Product Match Quiz{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --quiz-bg: #fffbf7;
+        --quiz-primary: #a56df9;
+        --quiz-secondary: #ffcda5;
+        --quiz-card: #ffffff;
+        --quiz-text: #2d3748;
+    }
+    
+    body {
+        background: var(--quiz-bg);
+    }
+    
+    .quiz-container {
+        max-width: 800px;
+        margin: 60px auto;
+        padding: 40px;
+        background: var(--quiz-card);
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        text-align: center;
+        min-height: 450px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .quiz-step {
+        display: none;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .quiz-step.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .quiz-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--quiz-primary);
+        margin-bottom: 10px;
+    }
+
+    .quiz-subtitle {
+        font-size: 16px;
+        color: #718096;
+        margin-bottom: 40px;
+    }
+
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .option-card {
+        padding: 25px 15px;
+        background: #f7fafc;
+        border: 2px solid transparent;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .option-card:hover {
+        background: #ebf4ff;
+        transform: translateY(-3px);
+    }
+
+    .option-card.selected {
+        border-color: var(--quiz-primary);
+        background: #faf5ff;
+        box-shadow: 0 4px 12px rgba(165, 109, 249, 0.15);
+    }
+
+    .option-icon {
+        font-size: 32px;
+        color: var(--quiz-primary);
+    }
+
+    .option-text {
+        font-weight: 600;
+        color: var(--quiz-text);
+        font-size: 16px;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #edf2f7;
+        border-radius: 4px;
+        margin-top: 40px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--quiz-secondary), var(--quiz-primary));
+        width: 0%;
+        transition: width 0.4s ease;
+    }
+
+    .nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+
+    .btn-quiz {
+        padding: 12px 28px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-prev {
+        background: #edf2f7;
+        color: #4a5568;
+    }
+    .btn-prev:hover { background: #e2e8f0; }
+
+    .btn-next {
+        background: var(--quiz-primary);
+        color: white;
+    }
+    .btn-next:hover { background: #9055e8; box-shadow: 0 4px 10px rgba(165, 109, 249, 0.3); }
+    .btn-next:disabled { background: #cbd5e0; cursor: not-allowed; box-shadow: none; }
+
+    /* Loading overlay */
+    .loading-overlay {
+        display: none;
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.95);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+    .spinner {
+        width: 50px; height: 50px;
+        border: 5px solid #edf2f7;
+        border-top-color: var(--quiz-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+
+<div class="quiz-container">
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <h2 style="color: var(--quiz-primary);">Finding your perfect matches...</h2>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="quiz-step active" id="step-1">
+        <h2 class="quiz-title">Let's find exactly what you need! ✨</h2>
+        <p class="quiz-subtitle">Question 1 of 5: What category are you shopping for?</p>
+        <div class="options-grid" id="q1">
+            <div class="option-card" data-val="Electronics">
+                <i class="fas fa-laptop option-icon"></i><span class="option-text">Electronics</span>
+            </div>
+            <div class="option-card" data-val="Beauty">
+                <i class="fas fa-spa option-icon"></i><span class="option-text">Makeup & Beauty</span>
+            </div>
+            <div class="option-card" data-val="Books">
+                <i class="fas fa-book option-icon"></i><span class="option-text">Books</span>
+            </div>
+            <div class="option-card" data-val="Fashion">
+                <i class="fas fa-tshirt option-icon"></i><span class="option-text">Clothing</span>
+            </div>
+            <div class="option-card" data-val="Other">
+                <i class="fas fa-box-open option-icon"></i><span class="option-text">Other (Shoes, Toys)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="quiz-step" id="step-2">
+        <h2 class="quiz-title">What is your budget? 💰</h2>
+        <p class="quiz-subtitle">Question 2 of 5: This helps us filter items perfectly for you.</p>
+        <div class="options-grid" id="q2">
+            <div class="option-card" data-val="under_500">
+                <span class="option-text" style="font-size: 20px;">Under ₹500</span>
+            </div>
+            <div class="option-card" data-val="500_2000">
+                <span class="option-text" style="font-size: 20px;">₹500 – ₹2000</span>
+            </div>
+            <div class="option-card" data-val="2000_10000">
+                <span class="option-text" style="font-size: 20px;">₹2000 – ₹10000</span>
+            </div>
+            <div class="option-card" data-val="above_10000">
+                <span class="option-text" style="font-size: 20px;">Above ₹10000</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="quiz-step" id="step-3">
+        <h2 class="quiz-title">What is the purpose? 🎯</h2>
+        <p class="quiz-subtitle">Question 3 of 5: How do you intend to use it?</p>
+        <div class="options-grid" id="q3">
+            <div class="option-card" data-val="Daily">
+                <i class="fas fa-calendar-day option-icon"></i><span class="option-text">Daily use</span>
+            </div>
+            <div class="option-card" data-val="Professional">
+                <i class="fas fa-briefcase option-icon"></i><span class="option-text">Professional use</span>
+            </div>
+            <div class="option-card" data-val="Occasion">
+                <i class="fas fa-glass-cheers option-icon"></i><span class="option-text">Occasion / Party</span>
+            </div>
+            <div class="option-card" data-val="Gift">
+                <i class="fas fa-gift option-icon"></i><span class="option-text">Gift for someone</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="quiz-step" id="step-4">
+        <h2 class="quiz-title">Your experience level? 🎓</h2>
+        <p class="quiz-subtitle">Question 4 of 5: E.g., basic makeup vs pro palettes, or light reading vs heavy novels.</p>
+        <div class="options-grid" id="q4">
+            <div class="option-card" data-val="Beginner">
+                <i class="fas fa-seedling option-icon" style="color: #48bb78;"></i><span class="option-text">Beginner (Simple & easy)</span>
+            </div>
+            <div class="option-card" data-val="Intermediate">
+                <i class="fas fa-leaf option-icon" style="color: #ecc94b;"></i><span class="option-text">Intermediate (Enthusiast)</span>
+            </div>
+            <div class="option-card" data-val="Expert">
+                <i class="fas fa-tree option-icon" style="color: #e53e3e;"></i><span class="option-text">Expert (Advanced/Pro)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="quiz-step" id="step-5">
+        <h2 class="quiz-title">What matters most to you? ⭐</h2>
+        <p class="quiz-subtitle">Question 5 of 5: This decides how we sort your final recommendations.</p>
+        <div class="options-grid" id="q5">
+            <div class="option-card" data-val="Price">
+                <i class="fas fa-tags option-icon" style="color: #ed8936;"></i><span class="option-text">Price (Value for money)</span>
+            </div>
+            <div class="option-card" data-val="Quality">
+                <i class="fas fa-award option-icon" style="color: #ecc94b;"></i><span class="option-text">Quality (Highest rated)</span>
+            </div>
+            <div class="option-card" data-val="Brand">
+                <i class="fas fa-medal option-icon" style="color: #4299e1;"></i><span class="option-text">Brand Reliability</span>
+            </div>
+            <div class="option-card" data-val="Trends">
+                <i class="fas fa-fire option-icon" style="color: #f56565;"></i><span class="option-text">Latest Trends</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Persistent Navigation -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+    
+    <div class="nav-buttons">
+        <button class="btn-quiz btn-prev" id="btn-prev" onclick="changeStep(-1)" style="visibility: hidden;">Back</button>
+        <button class="btn-quiz btn-next" id="btn-next" onclick="changeStep(1)" disabled>Next Step</button>
+    </div>
+
+</div>
+
+<!-- Form to submit results -->
+<form id="quiz-form" action="/quiz/results" method="POST" style="display: none;">
+    <input type="hidden" name="category" id="in_category" value="">
+    <input type="hidden" name="budget" id="in_budget" value="">
+    <input type="hidden" name="purpose" id="in_purpose" value="">
+    <input type="hidden" name="experience" id="in_experience" value="">
+    <input type="hidden" name="priority" id="in_priority" value="">
+</form>
+
+<script>
+    let currentStep = 1;
+    const totalSteps = 5;
+    const answers = { q1: null, q2: null, q3: null, q4: null, q5: null };
+
+    // Selectability logic
+    [1, 2, 3, 4, 5].forEach(step => {
+        const grid = document.getElementById('q' + step);
+        const cards = grid.querySelectorAll('.option-card');
+        cards.forEach(card => {
+            card.addEventListener('click', function() {
+                cards.forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                answers['q' + step] = this.getAttribute('data-val');
+                checkNextButton();
+                // auto advance slightly delayed if not last step
+                if(step < totalSteps) {
+                    setTimeout(() => changeStep(1), 350);
+                }
+            });
+        });
+    });
+
+    function checkNextButton() {
+        const btnNext = document.getElementById('btn-next');
+        if (answers['q' + currentStep] !== null) {
+            btnNext.disabled = false;
+        } else {
+            btnNext.disabled = true;
+        }
+        
+        if (currentStep === totalSteps) {
+            btnNext.innerText = "Show My Recommendations ✨";
+        } else {
+            btnNext.innerText = "Next Step";
+        }
+    }
+
+    function changeStep(dir) {
+        if (dir === 1 && answers['q' + currentStep] === null) return;
+        
+        if (dir === 1 && currentStep === totalSteps) {
+            // Submit form
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('in_category').value = answers.q1;
+            document.getElementById('in_budget').value = answers.q2;
+            document.getElementById('in_purpose').value = answers.q3;
+            document.getElementById('in_experience').value = answers.q4;
+            document.getElementById('in_priority').value = answers.q5;
+            setTimeout(() => {
+                document.getElementById('quiz-form').submit();
+            }, 1200); // Fake slightly long feeling delay for effect
+            return;
+        }
+
+        document.getElementById('step-' + currentStep).classList.remove('active');
+        currentStep += dir;
+        document.getElementById('step-' + currentStep).classList.add('active');
+
+        // Nav logic
+        document.getElementById('btn-prev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+        
+        // Progress logic
+        const percent = ((currentStep - 1) / totalSteps) * 100;
+        document.getElementById('progress').style.width = percent + '%';
+        
+        checkNextButton();
+    }
+    
+    // Init progress
+    document.getElementById('progress').style.width = '0%';
+</script>
+{% endblock %}

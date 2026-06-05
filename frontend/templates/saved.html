@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}My Collections & Wishlist : SmartShop{% endblock %}
+
+{% block content %}
+<div class="wishlist-container" style="max-width:1200px; margin:40px auto; padding:20px; display:grid; grid-template-columns: 280px 1fr; gap:30px; min-height: 80vh;">
+    
+    <!-- Sidebar: Collections Manager -->
+    <div class="collections-sidebar" style="background:#ffffff; border-radius:12px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); height:fit-content; border: 1px solid #edf2f7;">
+        <h2 style="font-size:18px; font-weight:700; color:#1a202c; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-folder-open" style="color:#FF9900;"></i> My Collections
+        </h2>
+        
+        <div class="collections-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+            <a href="#" class="collection-tab active" data-col="all" onclick="switchCollection('all')" style="display:flex; justify-content:between; align-items:center; padding:12px 16px; border-radius:8px; text-decoration:none; color:#2d3748; font-weight:600; background:#f7fafc; transition: all 0.2s;">
+                <span>📂 All Items</span>
+                <span class="badge" style="background:#e2e8f0; color:#4a5568; padding:2px 8px; border-radius:12px; font-size:12px;">{{ items|length }}</span>
+            </a>
+            
+            {% for name, col_items in collections.items() %}
+            <a href="#" class="collection-tab" data-col="{{ name }}" onclick="switchCollection('{{ name }}')" style="display:flex; justify-content:between; align-items:center; padding:12px 16px; border-radius:8px; text-decoration:none; color:#4a5568; transition: all 0.2s;">
+                <span>📁 {{ name }}</span>
+                <span class="badge" style="background:#edf2f7; color:#718096; padding:2px 8px; border-radius:12px; font-size:12px;">{{ col_items|length }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        
+        <!-- Add New Collection Form -->
+        <div style="border-top: 1px solid #edf2f7; padding-top:20px;">
+            <h3 style="font-size:14px; font-weight:600; color:#718096; margin-bottom:12px;">Create New Collection</h3>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="new-col-name" placeholder="e.g. Summer Outfits" style="flex:1; padding:8px 12px; border:1px solid #cbd5e0; border-radius:6px; font-size:14px; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='#FF9900'" onblur="this.style.borderColor='#cbd5e0'">
+                <button onclick="createNewCollection()" style="background:#FF9900; color:white; border:none; border-radius:6px; padding:8px 12px; cursor:pointer; font-weight:bold; transition: background 0.2s;"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Panel: Items Display -->
+    <div class="items-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1 id="active-collection-title" style="font-size:24px; font-weight:700; color:#1a202c;">All Saved Items</h1>
+            <span style="color:#718096; font-size:14px;" id="active-collection-count">{{ items|length }} products found</span>
+        </div>
+        
+        {% if items and items|length > 0 %}
+        <div class="wishlist-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:20px;">
+            {% for it in items %}
+            <div class="wishlist-card" data-collections="{{ it.collection_name }}" style="background:white; border-radius:12px; overflow:hidden; border: 1px solid #edf2f7; box-shadow:0 4px 12px rgba(0,0,0,0.03); display:flex; flex-direction:column; transition: transform 0.2s, box-shadow 0.2s;">
+                
+                <div style="position:relative; padding-top:100%; background:#f7fafc;">
+                    <img src="{{ it.image }}" alt="{{ it.name }}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; transition:transform 0.3s;">
+                    <button onclick="deleteFromWishlist({{ it.id }})" style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.9); border:none; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.1); color:#e53e3e; transition: background 0.2s, color 0.2s;" class="delete-btn-hover" title="Remove Item">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <span style="position:absolute; bottom:12px; left:12px; background:rgba(0,0,0,0.6); color:white; font-size:11px; font-weight:600; padding:4px 8px; border-radius:4px; backdrop-filter:blur(4px);">
+                        📂 {{ it.collection_name }}
+                    </span>
+                </div>
+                
+                <div style="padding:16px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div>
+                        <div style="font-size:13px; font-weight:600; color:#718096; text-transform:uppercase; margin-bottom:4px;">{{ it.category }}</div>
+                        <h3 style="font-size:16px; font-weight:600; color:#2d3748; margin:0 0 8px 0; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; height:44px;">
+                            {{ it.name }}
+                        </h3>
+                        
+                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:12px;">
+                            <div style="color:#ffda66; font-size:14px;">
+                                {% for idx in range(1, 6) %}
+                                    {% if it.rating >= idx %}
+                                        <i class="fas fa-star"></i>
+                                    {% elif it.rating >= idx - 0.5 %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span style="color:#718096; font-size:13px; font-weight:500;">({{ it.rating }})</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:15px; border-top:1px solid #f7fafc; padding-top:12px;">
+                            <span style="font-size:13px; color:#a0aec0;">Price Range</span>
+                            <span style="font-size:18px; font-weight:700; color:#2b6cb0;">₹{{ it.price }}</span>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <a href="/product/{{ it.id }}" style="display:block; text-align:center; padding:10px; background:#ffd814; color:#111; font-weight:600; border-radius:8px; text-decoration:none; transition: background 0.2s;" onmouseover="this.style.background='#f7ca00'" onmouseout="this.style.background='#ffd814'">
+                                <i class="fas fa-search" style="margin-right:6px;"></i> Compare Prices
+                            </a>
+                            
+                            <!-- Move / Organize Dropdown -->
+                            <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+                                <label style="font-size:11px; color:#718096; font-weight:600;">Move to:</label>
+                                <select onchange="moveItemCollection({{ it.id }}, this.value)" style="flex:1; font-size:12px; padding:4px 8px; border:1px solid #cbd5e0; border-radius:4px; outline:none; background:white;">
+                                    <option value="Favorites" {% if it.collection_name == 'Favorites' %}selected{% endif %}>Favorites</option>
+                                    {% for name in collections.keys() %}
+                                        {% if name != 'Favorites' %}
+                                            <option value="{{ name }}" {% if it.collection_name == name %}selected{% endif %}>{{ name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:60px 20px; background:white; border-radius:12px; border:1px solid #edf2f7; box-shadow:0 4px 12px rgba(0,0,0,0.02);">
+            <div style="font-size:48px; color:#e2e8f0; margin-bottom:15px;"><i class="fas fa-heart-broken"></i></div>
+            <h2 style="font-size:20px; color:#4a5568; margin-bottom:8px;">Your Wishlist is Empty</h2>
+            <p style="color:#718096; font-size:14px; margin-bottom:20px; max-width:400px; margin-left:auto; margin-right:auto;">Explore AI recommendations, vibe check matching items, and save products here to build custom shopping boards.</p>
+            <a href="/home" style="display:inline-block; padding:12px 24px; background:#ffd814; color:#111; font-weight:bold; border-radius:8px; text-decoration:none; transition: background 0.2s;" onmouseover="this.style.background='#f7ca00'" onmouseout="this.style.background='#ffd814'">Explore Products</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .collection-tab:hover {
+        background: #f7fafc;
+        transform: translateX(4px);
+    }
+    .collection-tab.active {
+        background: #fffaf0 !important;
+        border-left: 4px solid #FF9900;
+        color: #FF9900 !important;
+        padding-left: 12px !important;
+    }
+    .wishlist-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.06) !important;
+    }
+    .wishlist-card:hover img {
+        transform: scale(1.05);
+    }
+    .delete-btn-hover:hover {
+        background: #e53e3e !important;
+        color: white !important;
+    }
+</style>
+
+<script>
+    let activeCollection = 'all';
+
+    function switchCollection(name) {
+        activeCollection = name;
+        
+        // Update tab highlights
+        document.querySelectorAll('.collection-tab').forEach(tab => {
+            if (tab.getAttribute('data-col') === name) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+        
+        // Update title
+        const titleEl = document.getElementById('active-collection-title');
+        if (name === 'all') {
+            titleEl.innerText = 'All Saved Items';
+        } else {
+            titleEl.innerText = 'Collection: ' + name;
+        }
+        
+        // Filter cards in UI
+        let count = 0;
+        document.querySelectorAll('.wishlist-card').forEach(card => {
+            const cols = card.getAttribute('data-collections');
+            if (name === 'all' || cols === name) {
+                card.style.display = 'flex';
+                count++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('active-collection-count').innerText = count + ' products found';
+    }
+
+    async function createNewCollection() {
+        const input = document.getElementById('new-col-name');
+        const name = input.value.trim();
+        if (!name) return;
+        
+        const selects = document.querySelectorAll('.wishlist-card select');
+        selects.forEach(sel => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.innerText = name;
+            sel.appendChild(opt);
+        });
+        
+        alert(`Collection "${name}" initialized! Select "Move to: ${name}" on any product card below to organize it into this collection.`);
+        input.value = '';
+    }
+
+    async function moveItemCollection(productId, collectionName) {
+        try {
+            const res = await fetch('/api/saved/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId, collection: collectionName })
+            });
+            const data = await res.json();
+            if (data.success) {
+                location.reload();
+            }
+        } catch (err) {
+            console.error('Failed to move item to collection', err);
+        }
+    }
+</script>
+{% endblock %}

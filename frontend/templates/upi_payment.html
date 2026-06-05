@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}UPI Payment : SmartShop{% endblock %}
+
+{% block content %}
+<div style="max-width:800px; margin:40px auto; padding:20px; background:white; border-radius:8px; text-align:center;">
+    <h1 style="font-weight:normal;">Pay with UPI</h1>
+    <p>Scan the QR code with your UPI app or tap the button to open the payment on your phone.</p>
+
+    {% if error %}
+    <div style="margin:20px; padding:12px; background:#fff3cd; color:#664d03; border-radius:6px;">{{ error }}</div>
+    <div style="margin:10px;">Please open your UPI app (PhonePe / Google Pay / BHIM), add your UPI ID (VPA) and try again.</div>
+    {% else %}
+    <div style="margin:20px 0;">
+        <img src="{{ qr }}" alt="UPI QR" style="width:300px; height:300px; border:1px solid #eee;" />
+    </div>
+
+    <div style="margin-bottom:12px;">UPI URI:</div>
+    <div style="word-break:break-all; background:#f8fafc; padding:10px; border-radius:6px; margin:0 20px 20px;">{{ upi_uri }}</div>
+
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:12px;">
+        <a id="open-generic" href="{{ upi_uri }}" style="display:inline-block; padding:10px 14px; background:#059669; color:white; border-radius:8px; text-decoration:none; font-weight:700;">Open in UPI app</a>
+        <a id="open-phonepe" href="#" style="display:inline-block; padding:10px 14px; background:#3b82f6; color:white; border-radius:8px; text-decoration:none; font-weight:700;">Open in PhonePe</a>
+        <a id="open-gpay" href="#" style="display:inline-block; padding:10px 14px; background:#0ea5a3; color:white; border-radius:8px; text-decoration:none; font-weight:700;">Open in Google Pay</a>
+        <a id="open-bhim" href="#" style="display:inline-block; padding:10px 14px; background:#7c3aed; color:white; border-radius:8px; text-decoration:none; font-weight:700;">Open in BHIM</a>
+    </div>
+    {% endif %}
+
+    <p style="margin-top:18px;">After completing payment in your UPI app, return here and click <strong>Confirm Payment</strong>.</p>
+
+    <form method="post" action="/checkout/confirm" style="margin-top:12px;">
+        <input type="hidden" name="order_id" value="{{ order.id }}" />
+        <button type="submit" style="padding:10px 14px; background:#111827; color:white; border-radius:6px; border:none;">Confirm Payment</button>
+    </form>
+</div>
+<script>
+    (function(){
+        var upi = '{{ upi_uri }}';
+        var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        function tryOpen(url){
+            try{ window.location.href = url; }catch(e){}
+            setTimeout(function(){
+                var ifr = document.createElement('iframe'); ifr.style.display='none'; ifr.src = url; document.body.appendChild(ifr);
+                setTimeout(function(){ try{ document.body.removeChild(ifr); }catch(e){} }, 1500);
+            }, 500);
+        }
+
+        // Build intent URIs safely by encoding pa param
+        var pa = encodeURIComponent('{{ upi_uri.split("?pa=")[1].split("&")[0] if "?pa=" in upi_uri else "" }}');
+        var intentPhonePe = 'intent://pay?pa=' + pa + '#Intent;scheme=upi;package=com.phonepe.app;end';
+        var intentGPay = 'intent://upi/pay?pa=' + pa + '#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end';
+        var intentBHIM = 'intent://pay?pa=' + pa + '#Intent;scheme=upi;package=in.org.npci.upiapp;end';
+
+        document.getElementById('open-phonepe').addEventListener('click', function(e){ e.preventDefault(); tryOpen(intentPhonePe); });
+        document.getElementById('open-gpay').addEventListener('click', function(e){ e.preventDefault(); tryOpen(intentGPay); });
+        document.getElementById('open-bhim').addEventListener('click', function(e){ e.preventDefault(); tryOpen(intentBHIM); });
+
+        // On Android Chrome, try Google Pay then PhonePe, then generic UPI
+        var isAndroidChrome = /Android/.test(navigator.userAgent) && /Chrome\//.test(navigator.userAgent);
+        if(isAndroidChrome){
+            setTimeout(function(){ tryOpen(intentGPay); }, 600);
+            setTimeout(function(){ tryOpen(intentPhonePe); }, 1200);
+            setTimeout(function(){ tryOpen(upi); }, 1800);
+        } else if(isMobile){
+            setTimeout(function(){ tryOpen(upi); }, 600);
+        }
+    })();
+</script>
+{% endblock %}

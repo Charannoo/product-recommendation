@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <rect width="100%" height="100%" fill="#fffaf0"/>
+  <g transform="translate(120,200)">
+    <rect x="0" y="0" width="760" height="560" rx="24" fill="#ffffff" stroke="#fde68a" stroke-width="6"/>
+    <rect x="40" y="60" width="680" height="120" rx="6" fill="#fff6e6"/>
+    <rect x="40" y="200" width="680" height="260" rx="6" fill="#fff9f2"/>
+  </g>
+  <text x="500" y="880" font-family="Segoe UI, Arial" font-size="46" text-anchor="middle" fill="#92400e">Books</text>
+</svg>

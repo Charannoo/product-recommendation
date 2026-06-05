@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <rect width="100%" height="100%" fill="#f8fafc"/>
+  <g transform="translate(120,200)">
+    <rect x="100" y="40" width="600" height="220" rx="20" fill="#fff" stroke="#e6eef0" stroke-width="6"/>
+    <path d="M180 260 Q350 340 520 260" fill="#fef3c7" stroke="#fde68a" stroke-width="6"/>
+  </g>
+  <text x="500" y="880" font-family="Segoe UI, Arial" font-size="46" text-anchor="middle" fill="#064e3b">Clothing</text>
+</svg>
