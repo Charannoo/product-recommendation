@@ -6,7 +6,9 @@ import random
 import time
 import smtplib
 import ssl
-import requests
+import json
+import urllib.request
+import urllib.parse
 from email.message import EmailMessage
 from flask import make_response
 from datetime import timedelta
@@ -1472,30 +1474,38 @@ def debug_set_pending_expiry():
 
 
 def send_otp_via_sendgrid(to, subject, text, api_key, from_email):
-    resp = requests.post(
+    payload = json.dumps({
+        "personalizations": [{"to": [{"email": to}]}],
+        "from": {"email": from_email},
+        "subject": subject,
+        "content": [{"type": "text/plain", "value": text}]
+    }).encode()
+    req = urllib.request.Request(
         "https://api.sendgrid.com/v3/mail/send",
+        data=payload,
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         },
-        json={
-            "personalizations": [{"to": [{"email": to}]}],
-            "from": {"email": from_email},
-            "subject": subject,
-            "content": [{"type": "text/plain", "value": text}]
-        },
-        timeout=15
+        method="POST"
     )
-    return resp.ok
+    resp = urllib.request.urlopen(req, timeout=15)
+    return resp.status == 202
 
 def send_otp_via_mailgun(to, subject, text, api_key, domain, from_email):
-    resp = requests.post(
+    data = urllib.parse.urlencode({
+        "from": from_email, "to": to, "subject": subject, "text": text
+    }).encode()
+    req = urllib.request.Request(
         f"https://api.mailgun.net/v3/{domain}/messages",
-        auth=("api", api_key),
-        data={"from": from_email, "to": [to], "subject": subject, "text": text},
-        timeout=15
+        data=data,
+        method="POST"
     )
-    return resp.ok
+    import base64
+    token = base64.b64encode(f"api:{api_key}".encode()).decode()
+    req.add_header("Authorization", f"Basic {token}")
+    resp = urllib.request.urlopen(req, timeout=15)
+    return resp.status == 200
 
 def _send_smtp(host, port, use_tls, from_addr, password, to_addr, subject, body):
     if use_tls:
