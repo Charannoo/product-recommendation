@@ -355,14 +355,10 @@
         pullCord.addEventListener("touchstart", toggleLight, {passive: true});
         lampBulb.addEventListener("touchstart", toggleLight, {passive: true});
 
-        // Auto light-on if error or modal is shown
-        const hasError = {% if error %}true{% else %}false{% endif %};
-        const hasModal = {% if show_not_found_modal %}true{% else %}false{% endif %};
-        if (hasError || hasModal) {
-            roomEnv.classList.add("light-on");
-            isLightOn = true;
-            inputs.forEach(el => el.removeAttribute('tabIndex'));
-        }
+        // Auto light-on by default so users see the login form immediately
+        roomEnv.classList.add("light-on");
+        isLightOn = true;
+        inputs.forEach(el => el.removeAttribute('tabIndex'));
 
         // Frontend JS validation
         const loginForm = document.getElementById('loginForm');

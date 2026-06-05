@@ -1,0 +1,141 @@
+.account-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.quiz-banner {
+  display: block;
+  text-decoration: none;
+  margin-bottom: 30px;
+}
+.quiz-banner-inner {
+  background: linear-gradient(135deg, #a56df9 0%, #ffcda5 100%);
+  border-radius: 12px;
+  padding: 30px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 25px rgba(165, 109, 249, 0.2);
+  transition: transform 0.2s;
+}
+.quiz-banner-inner:hover {
+  transform: scale(1.01);
+}
+.quiz-banner h2 {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.quiz-banner p {
+  margin: 0;
+  font-size: 16px;
+  opacity: 0.9;
+}
+.quiz-banner-cta {
+  background: white;
+  color: #a56df9;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+}
+.account-title {
+  font-weight: normal;
+  margin-bottom: 20px;
+}
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+.account-card {
+  border: 1px solid #D5D9D9;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  gap: 15px;
+  cursor: pointer;
+  background: white;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+}
+.account-card:hover {
+  background: #f8f8f8;
+}
+.account-card-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.account-card h3 {
+  margin: 0 0 5px 0;
+  font-weight: normal;
+  font-size: 18px;
+}
+.account-card p {
+  color: #565959;
+  font-size: 14px;
+  margin: 0;
+}
+.recs-section {
+  margin-top: 40px;
+}
+.recs-title {
+  font-weight: normal;
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+.recs-scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 20px;
+}
+.rec-card {
+  min-width: 200px;
+  max-width: 200px;
+  border: 1px solid #ddd;
+  text-align: center;
+  border-radius: 8px;
+  padding: 10px;
+}
+.rec-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+.rec-card h4 {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #007185;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-card .rec-price {
+  font-size: 16px;
+  font-weight: bold;
+  color: #B12704;
+  margin-bottom: 10px;
+}
+.rec-card button {
+  width: 100%;
+  padding: 6px;
+  font-size: 12px;
+  background-color: #FFD814;
+  border: 1px solid #FCD200;
+  border-radius: 20px;
+  cursor: pointer;
+}
