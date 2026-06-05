@@ -1342,6 +1342,11 @@ def login():
             'is_registration': False
         }
         
+        # Store OTP for display when SMTP is not configured (dev/simulated mode)
+        smtp_configured = bool(os.environ.get('SMTP_EMAIL') and os.environ.get('SMTP_PASSWORD'))
+        if not smtp_configured:
+            session['simulated_otp'] = otp
+        
         record_otp_request(identifier, ip_addr)
         
         try:
@@ -1359,6 +1364,7 @@ def login():
 @app.route("/logout")
 def logout():
     session.pop('user', None)
+    session.pop('simulated_otp', None)
     return redirect(url_for("home"))
 
 
@@ -1367,6 +1373,8 @@ def verify_otp():
     pending = session.get('pending_otp')
     if not pending:
         return redirect(url_for('login'))
+    
+    simulated_otp = session.get('simulated_otp')
         
     if request.method == 'POST':
         code = request.form.get('otp_code', '').strip()
@@ -1374,7 +1382,8 @@ def verify_otp():
         # 1. Check expiration
         if int(time.time()) > pending.get('expires', 0):
             session.pop('pending_otp', None)
-            return render_template('verify_otp.html', error='OTP expired. Please request a new one.', show_debug=app.debug, pending=None)
+            session.pop('simulated_otp', None)
+            return render_template('verify_otp.html', error='OTP expired. Please request a new one.', show_debug=app.debug, pending=None, simulated_otp=None)
             
         # 2. Check attempts rate limit (brute force protection)
         attempts = pending.get('verify_attempts', 0) + 1
@@ -1383,7 +1392,8 @@ def verify_otp():
         
         if attempts > 5:
             session.pop('pending_otp', None)
-            return render_template('verify_otp.html', error='Too many incorrect OTP attempts. Please request a new one.', show_debug=app.debug, pending=None)
+            session.pop('simulated_otp', None)
+            return render_template('verify_otp.html', error='Too many incorrect OTP attempts. Please request a new one.', show_debug=app.debug, pending=None, simulated_otp=None)
             
         # 3. Verify OTP code
         if code == pending.get('code'):
@@ -1406,7 +1416,7 @@ def verify_otp():
                 except Exception as e:
                     print("DB insertion failed during registration:", e)
                     conn.close()
-                    return render_template('verify_otp.html', error='Failed to complete registration due to database error.', show_debug=app.debug, pending=pending)
+                    return render_template('verify_otp.html', error='Failed to complete registration due to database error.', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp)
                 session['show_new_user_quiz'] = True
             else:
                 # Login: load profile info (or generate name from identifier)
@@ -1420,12 +1430,13 @@ def verify_otp():
             # Authenticate user
             session['user'] = recipient
             session.pop('pending_otp', None)
+            session.pop('simulated_otp', None)
             return redirect(url_for('index'))
         else:
             attempts_left = 5 - attempts
-            return render_template('verify_otp.html', error=f'Invalid OTP. {attempts_left} attempts remaining.', show_debug=app.debug, pending=pending)
+            return render_template('verify_otp.html', error=f'Invalid OTP. {attempts_left} attempts remaining.', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp)
             
-    return render_template('verify_otp.html', show_debug=app.debug, pending=pending)
+    return render_template('verify_otp.html', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp)
 
 
 @app.route('/debug/last_otp')
@@ -1528,6 +1539,10 @@ def resend_otp():
     pending['resend_count'] = resend_count + 1
     session['pending_otp'] = pending
 
+    smtp_configured = bool(os.environ.get('SMTP_EMAIL') and os.environ.get('SMTP_PASSWORD'))
+    if not smtp_configured:
+        session['simulated_otp'] = new_otp
+
     record_otp_request(recipient, ip_addr)
 
     try:
@@ -1613,6 +1628,10 @@ def register():
             'reg_name': name,
             'reg_password': password
         }
+        
+        smtp_configured = bool(os.environ.get('SMTP_EMAIL') and os.environ.get('SMTP_PASSWORD'))
+        if not smtp_configured:
+            session['simulated_otp'] = otp
         
         record_otp_request(identifier, ip_addr)
         
