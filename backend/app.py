@@ -322,7 +322,6 @@ def get_filtered_products(args):
             display_products.sort(key=lambda x: x.get('id', 0), reverse=True)
         elif sort == 'recommended':
             history_ids = extract_user_history_ids()
-            from model import get_user_recommendations
             recs = get_user_recommendations(history_ids, load_catalog(), num_recommendations=100)
             rec_order = {r['id']: idx for idx, r in enumerate(recs)}
             display_products.sort(key=lambda x: rec_order.get(x.get('id'), 9999))
@@ -713,7 +712,6 @@ def home():
     trending_today = sorted(mock_products, key=lambda x: (x.get('rating', 0.0) * 1.5 + (20 if x.get('popularity') else 0) + (x.get('id') % 5)), reverse=True)[:8]
     
     # Most Recommended
-    from model import get_user_recommendations
     history_ids = []
     if user:
         history_ids = extract_user_history_ids()
