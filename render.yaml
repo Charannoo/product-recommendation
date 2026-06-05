@@ -13,4 +13,4 @@ services:
       - key: SMTP_PASSWORD
         sync: false
       - key: PYTHON_VERSION
-        value: 3.13.6
+        value: 3.12.0
