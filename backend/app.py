@@ -1481,7 +1481,7 @@ def send_otp_to_recipient(identifier, otp):
             session['simulated_otp'] = otp
             session['otp_delivery_status'] = 'not_configured'
             session.pop('otp_delivery_error', None)
-            print(f"⚠️ SMTP credentials not configured. Simulated OTP to Email [{identifier}]: {otp}")
+            print(f"[SMTP] Credentials not configured. Simulated OTP to Email [{identifier}]: {otp}")
             return True
         try:
             msg = EmailMessage()
@@ -1499,21 +1499,21 @@ def send_otp_to_recipient(identifier, otp):
             session.pop('simulated_otp', None)
             session['otp_delivery_status'] = 'sent'
             session.pop('otp_delivery_error', None)
-            print("✅ OTP sent to Gmail:", identifier)
+            print(f"[SMTP] OTP sent to {identifier}")
             return True
         except Exception as e:
             session['simulated_otp'] = otp
             session['otp_delivery_status'] = 'failed'
             session['otp_delivery_error'] = str(e)
-            print("❌ Email error:", e)
-            print(f"⚠️ Simulated fallback OTP to Email [{identifier}]: {otp}")
+            print(f"[SMTP] Email error: {e}")
+            print(f"[SMTP] Simulated fallback OTP to Email [{identifier}]: {otp}")
             return True
     else:
         # Mobile number flow (Simulated SMS delivery)
         session['simulated_otp'] = otp
         session['otp_delivery_status'] = 'simulated_sms'
         session.pop('otp_delivery_error', None)
-        print(f"📱 [SMS SIMULATION] Sent OTP to {identifier}: {otp}")
+        print(f"[SMS] Simulated OTP to {identifier}: {otp}")
         return True
 
 
