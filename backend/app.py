@@ -1594,9 +1594,10 @@ def send_otp_to_recipient(identifier, otp):
         # 4. Try Brevo HTTP API (port 443, not blocked, free 300/day)
         brevo_key = os.environ.get('BREVO_API_KEY')
         if brevo_key:
+            brevo_from = os.environ.get('BREVO_FROM_EMAIL', 'charan25569@gmail.com')
             try:
-                print(f"[Brevo] Sending from {from_email} to {identifier}")
-                if send_otp_via_brevo(identifier, subject, body, brevo_key, from_email):
+                print(f"[Brevo] Sending from {brevo_from} to {identifier}")
+                if send_otp_via_brevo(identifier, subject, body, brevo_key, brevo_from):
                     session.pop('simulated_otp', None)
                     session['otp_delivery_status'] = 'sent'
                     session.pop('otp_delivery_error', None)
