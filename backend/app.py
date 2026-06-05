@@ -1507,6 +1507,25 @@ def send_otp_via_mailgun(to, subject, text, api_key, domain, from_email):
     resp = urllib.request.urlopen(req, timeout=15)
     return resp.status == 200
 
+def send_otp_via_brevo(to, subject, text, api_key, from_email):
+    payload = json.dumps({
+        "sender": {"email": from_email},
+        "to": [{"email": to}],
+        "subject": subject,
+        "textContent": text
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=payload,
+        headers={
+            "api-key": api_key,
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+    resp = urllib.request.urlopen(req, timeout=15)
+    return resp.status in (200, 201)
+
 def _send_smtp(host, port, use_tls, from_addr, password, to_addr, subject, body):
     if use_tls:
         server = smtplib.SMTP(host, port, timeout=10)
@@ -1572,7 +1591,20 @@ def send_otp_to_recipient(identifier, otp):
             except Exception as e:
                 print(f"[Mailgun] Error: {e}")
 
-        # 4. Try SendGrid HTTP API (port 443, not blocked)
+        # 4. Try Brevo HTTP API (port 443, not blocked, free 300/day)
+        brevo_key = os.environ.get('BREVO_API_KEY')
+        if brevo_key:
+            try:
+                if send_otp_via_brevo(identifier, subject, body, brevo_key, from_email):
+                    session.pop('simulated_otp', None)
+                    session['otp_delivery_status'] = 'sent'
+                    session.pop('otp_delivery_error', None)
+                    print(f"[Brevo] OTP sent to {identifier}")
+                    return True
+            except Exception as e:
+                print(f"[Brevo] Error: {e}")
+
+        # 5. Try SendGrid HTTP API (port 443, not blocked)
         sendgrid_key = os.environ.get('SENDGRID_API_KEY')
         if sendgrid_key:
             try:
