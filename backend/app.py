@@ -1490,7 +1490,7 @@ def send_otp_to_recipient(identifier, otp):
             msg['To'] = identifier
             msg.set_content(f'Your SmartShop OTP is: {otp}. It will expire in 2 minutes.')
 
-            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
             server.starttls()
             server.login(smtp_email, smtp_password)
             server.send_message(msg)
