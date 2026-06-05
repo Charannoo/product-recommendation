@@ -5,6 +5,7 @@ import glob
 import random
 import time
 import smtplib
+import ssl
 import requests
 from email.message import EmailMessage
 from flask import make_response
@@ -1485,21 +1486,84 @@ def send_otp_via_sendgrid(to, subject, text, api_key, from_email):
         },
         timeout=15
     )
-    return resp.status_code in (200, 201, 202)
+    return resp.ok
+
+def send_otp_via_mailgun(to, subject, text, api_key, domain, from_email):
+    resp = requests.post(
+        f"https://api.mailgun.net/v3/{domain}/messages",
+        auth=("api", api_key),
+        data={"from": from_email, "to": [to], "subject": subject, "text": text},
+        timeout=15
+    )
+    return resp.ok
+
+def _send_smtp(host, port, use_tls, from_addr, password, to_addr, subject, body):
+    if use_tls:
+        server = smtplib.SMTP(host, port, timeout=10)
+        server.starttls()
+    else:
+        import ssl
+        server = smtplib.SMTP_SSL(host, port, timeout=10, context=ssl.create_default_context())
+    server.login(from_addr, password)
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = from_addr
+    msg['To'] = to_addr
+    msg.set_content(body)
+    server.send_message(msg)
+    server.quit()
+    return True
 
 def send_otp_to_recipient(identifier, otp):
     if not identifier:
         return False
-        
+
     if '@' in identifier:
-        sendgrid_key = os.environ.get('SENDGRID_API_KEY')
         smtp_email = os.environ.get('SMTP_EMAIL')
         smtp_password = os.environ.get('SMTP_PASSWORD')
-        from_email = smtp_email or os.environ.get('SENDGRID_FROM', 'noreply@smartshop.app')
+        from_email = smtp_email or os.environ.get('MAILGUN_FROM', 'noreply@smartshop.app')
         subject = 'Your SmartShop OTP'
         body = f'Your SmartShop OTP is: {otp}. It will expire in 2 minutes.'
 
-        # Try SendGrid HTTP API first (works on Railway, port 443)
+        # 1. Try Gmail SMTP port 465 (SSL) — NOT blocked by Railway
+        if smtp_email and smtp_password:
+            try:
+                _send_smtp('smtp.gmail.com', 465, False, smtp_email, smtp_password, identifier, subject, body)
+                session.pop('simulated_otp', None)
+                session['otp_delivery_status'] = 'sent'
+                session.pop('otp_delivery_error', None)
+                print(f"[SMTP-465] OTP sent to {identifier}")
+                return True
+            except Exception as e:
+                print(f"[SMTP-465] Error: {e}")
+
+            # 2. Try Gmail SMTP port 587 (STARTTLS) — often blocked on Railway
+            try:
+                _send_smtp('smtp.gmail.com', 587, True, smtp_email, smtp_password, identifier, subject, body)
+                session.pop('simulated_otp', None)
+                session['otp_delivery_status'] = 'sent'
+                session.pop('otp_delivery_error', None)
+                print(f"[SMTP-587] OTP sent to {identifier}")
+                return True
+            except Exception as e:
+                print(f"[SMTP-587] Error: {e}")
+
+        # 3. Try Mailgun HTTP API (port 443, not blocked)
+        mailgun_key = os.environ.get('MAILGUN_API_KEY')
+        mailgun_domain = os.environ.get('MAILGUN_DOMAIN')
+        if mailgun_key and mailgun_domain:
+            try:
+                if send_otp_via_mailgun(identifier, subject, body, mailgun_key, mailgun_domain, from_email):
+                    session.pop('simulated_otp', None)
+                    session['otp_delivery_status'] = 'sent'
+                    session.pop('otp_delivery_error', None)
+                    print(f"[Mailgun] OTP sent to {identifier}")
+                    return True
+            except Exception as e:
+                print(f"[Mailgun] Error: {e}")
+
+        # 4. Try SendGrid HTTP API (port 443, not blocked)
+        sendgrid_key = os.environ.get('SENDGRID_API_KEY')
         if sendgrid_key:
             try:
                 if send_otp_via_sendgrid(identifier, subject, body, sendgrid_key, from_email):
@@ -1508,51 +1572,16 @@ def send_otp_to_recipient(identifier, otp):
                     session.pop('otp_delivery_error', None)
                     print(f"[SendGrid] OTP sent to {identifier}")
                     return True
-                raise Exception("SendGrid API returned non-success status")
             except Exception as e:
-                session['simulated_otp'] = otp
-                session['otp_delivery_status'] = 'failed'
-                session['otp_delivery_error'] = str(e)
                 print(f"[SendGrid] Error: {e}")
-                print(f"[SendGrid] Fallback to simulated OTP for [{identifier}]: {otp}")
-                return True
 
-        # Fallback to SMTP (Gmail)
-        if smtp_email and smtp_password:
-            try:
-                msg = EmailMessage()
-                msg['Subject'] = subject
-                msg['From'] = smtp_email
-                msg['To'] = identifier
-                msg.set_content(body)
-
-                server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
-                server.starttls()
-                server.login(smtp_email, smtp_password)
-                server.send_message(msg)
-                server.quit()
-
-                session.pop('simulated_otp', None)
-                session['otp_delivery_status'] = 'sent'
-                session.pop('otp_delivery_error', None)
-                print(f"[SMTP] OTP sent to {identifier}")
-                return True
-            except Exception as e:
-                session['simulated_otp'] = otp
-                session['otp_delivery_status'] = 'failed'
-                session['otp_delivery_error'] = str(e)
-                print(f"[SMTP] Email error: {e}")
-                print(f"[SMTP] Simulated fallback OTP to Email [{identifier}]: {otp}")
-                return True
-
-        # No email service configured — simulated OTP
+        # All email methods failed — simulated OTP fallback
         session['simulated_otp'] = otp
         session['otp_delivery_status'] = 'not_configured'
         session.pop('otp_delivery_error', None)
-        print(f"[MAIL] No email service configured. Simulated OTP to Email [{identifier}]: {otp}")
+        print(f"[MAIL] No working email service. Simulated OTP for [{identifier}]: {otp}")
         return True
     else:
-        # Mobile number flow (Simulated SMS delivery)
         session['simulated_otp'] = otp
         session['otp_delivery_status'] = 'simulated_sms'
         session.pop('otp_delivery_error', None)
