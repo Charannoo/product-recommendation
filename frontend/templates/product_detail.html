@@ -1,6 +1,55 @@
 {% extends "base.html" %}
 {% block title %}{{ product.name }} - AI Product Discovery{% endblock %}
 
+{% macro render_rec_card(p) %}
+<div class="rec-card" id="rec-card-{{ p.id }}" style="background:white; border:1px solid #edf2f7; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; position:relative; box-shadow: var(--glass-shadow);">
+    <div style="position:relative; padding-top:85%; background:#f8fafc;">
+        <img src="{{ p.image }}" alt="{{ p.name }}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;">
+        <div class="feedback-overlay" style="position:absolute; top:8px; right:8px; display:flex; gap:6px; opacity:0; transition:opacity 0.2s; z-index:10;">
+            <button onclick="submitFeedback({{ p.id }}, 'helpful')" style="background:rgba(255,255,255,0.95); border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#10b981; box-shadow:0 2px 6px rgba(0,0,0,0.15);" title="Helpful">
+                <i class="fas fa-thumbs-up" style="font-size:11px;"></i>
+            </button>
+            <button onclick="submitFeedback({{ p.id }}, 'not_relevant')" style="background:rgba(255,255,255,0.95); border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#ef4444; box-shadow:0 2px 6px rgba(0,0,0,0.15);" title="Not Relevant">
+                <i class="fas fa-thumbs-down" style="font-size:11px;"></i>
+            </button>
+        </div>
+    </div>
+    <div style="padding:14px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+            <div style="font-size:10px; background:#fff7ed; color:#ea580c; border:1px solid #ffedd5; padding:4px 6px; border-radius:4px; font-weight:700; margin-bottom:8px; line-height:1.2;">
+                💡 {{ p.why_recommended or "Popular pick in this category" }}
+            </div>
+            <h4 style="font-size:13px; font-weight:600; color:#1e293b; margin:0 0 6px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; height:36px; line-height:1.3;">
+                <a href="/product/{{ p.id }}" style="color:inherit; text-decoration:none;">{{ p.name }}</a>
+            </h4>
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                <div style="color:#ffda66; font-size:11px;">
+                    {% for idx in range(1, 6) %}
+                        {% if p.rating >= idx %}
+                            <i class="fas fa-star"></i>
+                        {% elif p.rating >= idx - 0.5 %}
+                            <i class="fas fa-star-half-alt"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span style="color:#94a3b8; font-size:11px; font-weight:600;">({{ p.rating }})</span>
+            </div>
+        </div>
+        <div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid #f1f5f9; padding-top:8px;">
+                <span style="font-weight:700; color:#2b6cb0; font-size:15px;">₹{{ p.price }}</span>
+                <span style="font-size:9px; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:4px; font-weight:bold;">COMPARED</span>
+            </div>
+            <a href="/product/{{ p.id }}" style="display:block; text-align:center; padding:7px; background:#f8fafc; border:1px solid #cbd5e0; color:#475569; font-weight:700; border-radius:6px; text-decoration:none; font-size:12px; margin-top:8px; transition:all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b'" onmouseout="this.style.background='#f8fafc'; this.style.color='#475569'">
+                View Product
+            </a>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
 {% block content %}
 <style>
     :root {
@@ -309,14 +358,14 @@
     <!-- Explore Similar -->
     <div id="container-explore" class="rec-container-panel" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
         {% for p in explore_similar %}
-            {{ render_rec_card(p) }}
+            {{ self.render_rec_card(p) }}
         {% endfor %}
     </div>
 
     <!-- You May Also Like -->
     <div id="container-like" class="rec-container-panel" style="display:none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
         {% for p in you_may_also_like %}
-            {{ render_rec_card(p) }}
+            {{ self.render_rec_card(p) }}
         {% endfor %}
     </div>
 
@@ -324,71 +373,13 @@
     <div id="container-foryou" class="rec-container-panel" style="display:none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
         {% if recommended_for_you %}
             {% for p in recommended_for_you %}
-                {{ render_rec_card(p) }}
+                {{ self.render_rec_card(p) }}
             {% endfor %}
         {% else %}
             <p style="grid-column: 1/-1; text-align:center; color:#94a3b8; font-weight:600; padding:20px;">No personalized matches yet. Keep exploring to personalize your feed!</p>
         {% endif %}
     </div>
 </div>
-
-<!-- Macro for rendering recommendation cards with Why recommended explanation & Feedback loops -->
-{% macro render_rec_card(p) %}
-<div class="rec-card" id="rec-card-{{ p.id }}" style="background:white; border:1px solid #edf2f7; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; position:relative; box-shadow: var(--glass-shadow);">
-    
-    <div style="position:relative; padding-top:85%; background:#f8fafc;">
-        <img src="{{ p.image }}" alt="{{ p.name }}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;">
-        
-        <!-- Feedback overlay: shows on card hover -->
-        <div class="feedback-overlay" style="position:absolute; top:8px; right:8px; display:flex; gap:6px; opacity:0; transition:opacity 0.2s; z-index:10;">
-            <button onclick="submitFeedback({{ p.id }}, 'helpful')" style="background:rgba(255,255,255,0.95); border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#10b981; box-shadow:0 2px 6px rgba(0,0,0,0.15);" title="Helpful">
-                <i class="fas fa-thumbs-up" style="font-size:11px;"></i>
-            </button>
-            <button onclick="submitFeedback({{ p.id }}, 'not_relevant')" style="background:rgba(255,255,255,0.95); border:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#ef4444; box-shadow:0 2px 6px rgba(0,0,0,0.15);" title="Not Relevant">
-                <i class="fas fa-thumbs-down" style="font-size:11px;"></i>
-            </button>
-        </div>
-    </div>
-    
-    <div style="padding:14px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
-        <div>
-            <!-- Why We Recommended This Tag -->
-            <div style="font-size:10px; background:#fff7ed; color:#ea580c; border:1px solid #ffedd5; padding:4px 6px; border-radius:4px; font-weight:700; margin-bottom:8px; line-height:1.2;">
-                💡 {{ p.why_recommended or "Popular pick in this category" }}
-            </div>
-            
-            <h4 style="font-size:13px; font-weight:600; color:#1e293b; margin:0 0 6px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; height:36px; line-height:1.3;">
-                <a href="/product/{{ p.id }}" style="color:inherit; text-decoration:none;">{{ p.name }}</a>
-            </h4>
-            
-            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
-                <div style="color:#ffda66; font-size:11px;">
-                    {% for idx in range(1, 6) %}
-                        {% if p.rating >= idx %}
-                            <i class="fas fa-star"></i>
-                        {% elif p.rating >= idx - 0.5 %}
-                            <i class="fas fa-star-half-alt"></i>
-                        {% else %}
-                            <i class="far fa-star"></i>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                <span style="color:#94a3b8; font-size:11px; font-weight:600;">({{ p.rating }})</span>
-            </div>
-        </div>
-        
-        <div>
-            <div style="display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid #f1f5f9; padding-top:8px;">
-                <span style="font-weight:700; color:#2b6cb0; font-size:15px;">₹{{ p.price }}</span>
-                <span style="font-size:9px; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:4px; font-weight:bold;">COMPARED</span>
-            </div>
-            <a href="/product/{{ p.id }}" style="display:block; text-align:center; padding:7px; background:#f8fafc; border:1px solid #cbd5e0; color:#475569; font-weight:700; border-radius:6px; text-decoration:none; font-size:12px; margin-top:8px; transition:all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b'" onmouseout="this.style.background='#f8fafc'; this.style.color='#475569'">
-                View Product
-            </a>
-        </div>
-    </div>
-</div>
-{% endmacro %}
 
 <script>
     function switchRecTab(tabId) {
