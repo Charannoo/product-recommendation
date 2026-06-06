@@ -358,14 +358,14 @@
     <!-- Explore Similar -->
     <div id="container-explore" class="rec-container-panel" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
         {% for p in explore_similar %}
-            {{ self.render_rec_card(p) }}
+            {{ render_rec_card(p) }}
         {% endfor %}
     </div>
 
     <!-- You May Also Like -->
     <div id="container-like" class="rec-container-panel" style="display:none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
         {% for p in you_may_also_like %}
-            {{ self.render_rec_card(p) }}
+            {{ render_rec_card(p) }}
         {% endfor %}
     </div>
 
@@ -373,7 +373,7 @@
     <div id="container-foryou" class="rec-container-panel" style="display:none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
         {% if recommended_for_you %}
             {% for p in recommended_for_you %}
-                {{ self.render_rec_card(p) }}
+                {{ render_rec_card(p) }}
             {% endfor %}
         {% else %}
             <p style="grid-column: 1/-1; text-align:center; color:#94a3b8; font-weight:600; padding:20px;">No personalized matches yet. Keep exploring to personalize your feed!</p>
