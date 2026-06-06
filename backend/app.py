@@ -128,7 +128,11 @@ def load_catalog():
         print("Failed to load catalog.json:", e)
         return []
 
-mock_products = load_catalog()
+try:
+    mock_products = load_catalog()
+except Exception as e:
+    print("Failed to load catalog at startup:", e)
+    mock_products = []
 
 
 def _pick_existing_static_image(pattern: str) -> str | None:
@@ -377,17 +381,6 @@ def api_chat():
         app.logger.error(f'Chatbot error: {e}')
         response = {'reply': "Sorry, I'm having trouble connecting right now.", 'recommendations': []}
     return jsonify(response)
-
-@app.route("/")
-def index():
-    # Allow anonymous users to view the storefront on the root route.
-    # Previously this redirected to login which hid products for unauthenticated visitors.
-    products, active_category, cat_min, cat_max = get_filtered_products(request.args)
-    show_modal = False
-    if session.get('show_new_user_quiz'):
-        show_modal = True
-        session.pop('show_new_user_quiz', None)
-    return render_template("index.html", products=products, active_category=active_category, cat_min=cat_min, cat_max=cat_max, show_new_user_modal=show_modal)
 
 @app.route("/dashboard")
 def dashboard():
@@ -740,10 +733,20 @@ def products():
     products, active_category, cat_min, cat_max = get_filtered_products(request.args)
     return render_template("products.html", products=products, active_category=active_category, cat_min=cat_min, cat_max=cat_max)
 
+_last_catalog_mtime = 0
+
 @app.before_request
 def refresh_mock_products():
-    global mock_products
-    mock_products = load_catalog()
+    global mock_products, _last_catalog_mtime
+    try:
+        catalog_path = os.path.join(base_dir, 'data', 'catalog.json')
+        if os.path.exists(catalog_path):
+            current_mtime = os.path.getmtime(catalog_path)
+            if current_mtime != _last_catalog_mtime:
+                mock_products = load_catalog()
+                _last_catalog_mtime = current_mtime
+    except Exception as e:
+        print("refresh_mock_products error (non-fatal):", e)
 
 @app.context_processor
 def utility_processor():
@@ -1435,7 +1438,7 @@ def verify_otp():
             session['user'] = recipient
             session.pop('pending_otp', None)
             session.pop('simulated_otp', None)
-            return redirect(url_for('index'))
+            return redirect(url_for('home'))
         else:
             attempts_left = 5 - attempts
             return render_template('verify_otp.html', error=f'Invalid OTP. {attempts_left} attempts remaining.', show_debug=app.debug, pending=pending, simulated_otp=simulated_otp, otp_delivery_status=otp_delivery_status, otp_delivery_error=otp_delivery_error)
