@@ -141,29 +141,6 @@ Falls back to top-rated / popular products for new users.
 
 ---
 
-## ☁️ Deployment
-
-### Deploy on Render
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-
-This project includes a [`render.yaml`](render.yaml) for one-click deployment on Render:
-
-```yaml
-services:
-  - type: web
-    name: smartshop
-    runtime: python
-    buildCommand: python backend/inject_lookbooks.py
-    startCommand: gunicorn backend.app:app --bind 0.0.0.0:$PORT
-```
-
-**Required environment variables:**
-- `FLASK_SECRET_KEY` — App secret key
-- `SMTP_EMAIL` — Gmail address for OTP emails
-- `SMTP_PASSWORD` — Gmail app password
-
----
 
 ## 📄 License
 
