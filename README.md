@@ -9,9 +9,6 @@
 
 <br>
 
-<p align="center">
-  <img src="frontend/static/chatbot_logo.png" alt="SmartShop Logo" width="120" height="120" style="border-radius: 50%;">
-</p>
 
 <h1 align="center">🛍️ SmartShop AI</h1>
 <h3 align="center">AI-Powered Product Recommendation & Discovery Engine</h3>
